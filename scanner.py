@@ -131,7 +131,7 @@ class Port:
         """
         try:
             self.sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
-        except TimeoutError:
+        except (TimeoutError, socket.timeout):
             return {"status": "offline"}
 
         info = {"host": self.host, "port": self.port}
