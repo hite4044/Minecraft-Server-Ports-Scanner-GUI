@@ -1,3 +1,5 @@
+from tkinter.font import Font
+
 from ttkbootstrap import Style
 from ttkbootstrap.constants import *
 from scanner import ServerInfo
@@ -6,7 +8,7 @@ import ttkbootstrap as ttk
 from colorlib import Color
 from tkinter import Misc
 from typing import Any
-from copy import copy
+from copy import copy, deepcopy
 import tkinter as tk
 import vars
 
@@ -31,7 +33,7 @@ class MOTD(ttk.Text):
         for extra in self.data.description_json:
             try:
                 tag = hex(randint(0, 114514))
-                tag_font = ("Unifont", 12)
+                tag_font = Font(family="Unifont", size=12)
                 if extra.get("color"):
                     if "#" not in extra["color"]:
                         color = vars.color_map_hex[extra["color"]]
@@ -42,14 +44,11 @@ class MOTD(ttk.Text):
                 if extra.get("underline") or extra.get("underlined"):
                     self.tag_configure(tag, underline=True)
                 if extra.get("bold"):
-                    tag_font += ("bold",)
-                    tag_font = list(tag_font)
-                    tag_font[0] = "宋体"
-                    tag_font = tuple(tag_font)
+                    tag_font.config(family="宋体", weight="bold")
                 elif extra.get("italic"):
-                    tag_font += ("italic",)
+                    tag_font.config(slant="italic")
                 elif extra.get("strikethrough"):
-                    tag_font += ("overstrike",)
+                    tag_font.config(overstrike=True)
 
                 self.tag_configure(tag, font=tag_font, justify=LEFT)
                 self.insert(END, extra["text"], tag)

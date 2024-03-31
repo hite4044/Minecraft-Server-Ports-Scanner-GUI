@@ -1,4 +1,5 @@
 import re
+import pyglet
 import tkinter
 from widgets import *
 from tkinter import font
@@ -42,6 +43,8 @@ class GUI(ttk.Window):
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
         self.place_window_center()
+        pyglet.options['win32_gdi_font'] = True
+        pyglet.font.add_file("assets/Unifont.otf")
 
     def pack_widgets(self):
         self.title_bar.pack(fill=X, padx=10)
