@@ -1,14 +1,13 @@
-from tkinter.font import Font
-
-from ttkbootstrap import Style
 from ttkbootstrap.constants import *
+from tkinter.font import Font
+from ttkbootstrap import Style
 from scanner import ServerInfo
+from typing import Any, List
 from random import randint
 import ttkbootstrap as ttk
 from colorlib import Color
 from tkinter import Misc
-from typing import Any
-from copy import copy, deepcopy
+from copy import copy
 import tkinter as tk
 import vars
 
@@ -131,13 +130,13 @@ class TextEntry(ttk.Frame):
         return self.entry.get()
 
     def delete(self,
-               first: str | int,
-               last: str | int | None = None) -> None:
+               first,
+               last) -> None:
         self.entry.delete(first, last)
 
 
 class TextCombobox(ttk.Frame):
-    def __init__(self, master: Misc, tip: str, value: list[str] = None):
+    def __init__(self, master: Misc, tip: str, value: List[str] = None):
         super(TextCombobox, self).__init__(master)
 
         self.text = ttk.Label(self, text=tip)

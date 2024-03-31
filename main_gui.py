@@ -2,6 +2,7 @@ import re
 import pyglet
 import tkinter
 from widgets import *
+from typing import Dict
 from tkinter import font
 from ttkbootstrap import Style
 from win32gui import MessageBox
@@ -649,7 +650,7 @@ class ScanBar(ttk.LabelFrame):
         self.pause_button.pack(fill=X, expand=True, pady=2)
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
-    def callback(self, info: dict | ServerInfo):
+    def callback(self, info: Any):
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)

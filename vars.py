@@ -1,4 +1,5 @@
-servers: list[str] = ["s2.wemc.cc",  # 220.198.120.151
+from typing import List, Dict
+servers: List[str] = ["s2.wemc.cc",  # 220.198.120.151
                       "cn-yw-plc-1.openfrp.top",  # 122.242.149.92
                       "cn-hk-bgp-4.openfrp.top",  # 191.96.240.164
                       "ipyingshe.com",  # 111.45.28.82
@@ -6,7 +7,7 @@ servers: list[str] = ["s2.wemc.cc",  # 220.198.120.151
                       "yuming.net",  # 118.139.160.68
                       "dongtaiyuming.net"  # 203.107.44.133
                       ]
-color_map: dict[str, str] = {
+color_map: Dict[str, str] = {
     "0": "black",
     "1": "dark_blue",
     "2": "dark_green",
@@ -24,7 +25,7 @@ color_map: dict[str, str] = {
     "e": "yellow",
     "f": "white",
 }
-color_map_hex: dict[str, str] = {
+color_map_hex: Dict[str, str] = {
     "black": "#000000",
     "dark_blue": "#0000AA",
     "dark_green": "#00AA00",
@@ -43,7 +44,7 @@ color_map_hex: dict[str, str] = {
     "white": "#FFFFFF",
 }
 
-protocol_map: list[dict[str, str]] = [
+protocol_map: List[Dict[str, str]] = [
     {
         "minecraftVersion": "24w11a",
         "version": 1073742004,

@@ -2,14 +2,14 @@ import vars
 import socket
 import varint
 from io import BytesIO
-from typing import Any
 from struct import pack
 from copy import deepcopy
 from time import time, sleep
 from base64 import b64decode
-from threading import Thread, Lock
 from PIL import Image, ImageTk
 from queue import Queue, Empty
+from typing import List, Dict, Any
+from threading import Thread, Lock
 from json import loads as json_loads
 from json.decoder import JSONDecodeError
 from func_timeout import func_set_timeout
@@ -251,7 +251,7 @@ class Port:
         return Port.make_packet(0x00)
 
     @staticmethod
-    def make_packet(packet_id: int, *datas: bytes | int) -> bytes:
+    def make_packet(packet_id: int, *datas: bytes) -> bytes:
         """
         制作一个符合Minecraft协议的数据包
         https://wiki.vg/Protocol:zh-cn#.E6.97.A0.E5.8E.8B.E7.BC.A9
@@ -362,7 +362,7 @@ class DescriptionParser:
     """描述解析器"""
 
     @staticmethod
-    def format_chars_to_extras(text: str) -> list[dict]:
+    def format_chars_to_extras(text: str) -> List[dict]:
         """格式化文本"""
         extras = []
         for extra in text.split("§"):
@@ -389,7 +389,7 @@ class DescriptionParser:
         return extras
 
     @staticmethod
-    def parse(description: str | dict | list) -> list[dict]:
+    def parse(description: Any) -> List[dict]:
         """解析描述"""
         if isinstance(description, str):
             if "§" in description:
@@ -435,7 +435,7 @@ def test():
     print(port.get_server_info())
 
 
-def temp2(info: dict | ServerInfo):
+def temp2(info):
     if isinstance(info, dict):
         if info["status"] != "offline":
             print(info)
