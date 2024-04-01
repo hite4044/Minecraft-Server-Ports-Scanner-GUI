@@ -399,6 +399,7 @@ class Logger(ttk.Frame):
         self.log_list = list(self.levels.values())
         self.log_count = 0
         self.now_level = INFO
+        self.log_lock = Lock()
 
         # 信息条
         self.info_bar = ttk.Frame(self)
@@ -434,13 +435,14 @@ class Logger(ttk.Frame):
         self.log_count_label.configure(text=f"日志数量: {self.log_count}")
 
     def log(self, level: str, *values: object, sep: str = " "):
-        now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
-        log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
-        self.logs.append(log)
-        if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
-            self.insert_a_log(log)
-        self.log_count += 1
-        self.set_log_count()
+        with self.log_lock:
+            now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
+            log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
+            self.logs.append(log)
+            if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
+                self.insert_a_log(log)
+            self.log_count += 1
+            self.set_log_count()
 
     def on_level_change(self, _):
         self.now_level = self.levels[self.select_combobox.get()]
