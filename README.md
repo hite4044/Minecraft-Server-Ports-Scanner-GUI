@@ -1,5 +1,7 @@
 # *Minecraft-Server-Ports-Scanner-GUI*
 
+## **_免责声明：这仅用于教育目的，我不对这些工具的任何滥用负责！_**
+
 ### 简介
 
 扫描一个服务器所有端口上的Minecraft服务器，并把信息显示出来
@@ -8,7 +10,7 @@
 
 ## 优点
 
-* 漂亮的GUI（使用了ttkbootstrap库，真的很好用）
+* 漂亮的GUI（使用了ttkbootstrap库，真的很漂亮）
 * ~~卡顿的调整大小~~
 * ~~老古董tkinter库~~
 * 扫描
