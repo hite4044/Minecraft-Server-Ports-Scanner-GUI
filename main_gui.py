@@ -56,7 +56,7 @@ class GUI(ttk.Window):
         self.wm_title("MC服务器扫描器")
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
-        self.place_window_center()
+        Thread(target=self.place_window_center).start()
 
     def pack_widgets(self):
         self.title_bar.pack(fill=X, padx=10)
