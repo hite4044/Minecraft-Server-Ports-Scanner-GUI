@@ -20,6 +20,11 @@ def set_default_font():
     font.nametofont("TkDefaultFont").config(family="微软雅黑", size=10)
 
 
+def load_unifont():
+    pyglet.options['win32_gdi_font'] = True
+    pyglet.font.add_file("assets/Unifont.otf")
+
+
 class GUI(ttk.Window):
     def __init__(self):
         super(GUI, self).__init__()
@@ -39,14 +44,13 @@ class GUI(ttk.Window):
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
+        Thread(target=load_unifont).start()  # 加载字体
 
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
         self.place_window_center()
-        pyglet.options['win32_gdi_font'] = True
-        pyglet.font.add_file("assets/Unifont.otf")
 
     def pack_widgets(self):
         self.title_bar.pack(fill=X, padx=10)
