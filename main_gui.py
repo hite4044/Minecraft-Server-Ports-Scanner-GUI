@@ -25,6 +25,12 @@ def load_unifont():
     pyglet.font.add_file("assets/Unifont.otf")
 
 
+def ping_host(host: str) -> bool:
+    cmd = f"ping -n 1 {host}"
+    output = getoutput(cmd)
+    return "丢失 = 0" in output
+
+
 class GUI(ttk.Window):
     def __init__(self):
         super(GUI, self).__init__()
@@ -606,12 +612,6 @@ class RangeSelector(ttk.Frame):
     def stop_port(self) -> int:
         _, _max = self.range_selector.value
         return int(self.start + (self.stop - self.start) * _max)
-
-
-def ping_host(host: str) -> bool:
-    cmd = f"ping -n 1 {host}"
-    output = getoutput(cmd)
-    return "丢失 = 0" in output
 
 
 class ScanBar(ttk.LabelFrame):
