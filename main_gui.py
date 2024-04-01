@@ -7,12 +7,13 @@ from tkinter import font
 from ttkbootstrap import Style
 from win32gui import MessageBox
 from info_gui import InfoWindow
+from subprocess import getoutput
 from scanner import ServerScanner
 from threading import Thread, Lock
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
 from time import perf_counter, sleep, time, strftime
-from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK
+from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO
 
 
 def set_default_font():
@@ -664,16 +665,20 @@ class ScanBar(ttk.LabelFrame):
     def start_scan(self, start: int = None, stop: int = None):  # 20500 - 25000
         if self.in_scan:
             return
-        self.in_scan = True
-        self.start_button.configure(state=DISABLED)
-        self.pause_button.configure(state=NORMAL)
-        self.stop_button.configure(state=NORMAL)
 
         host = self.host_input.get()
         thread_num = self.thread_num_input.get_value()
         timeout = self.timeout_input.get_value()
         if not (start and stop):
             start, stop = self.range_input.get()
+
+        if not self.check_host(host):
+            return
+
+        self.in_scan = True
+        self.start_button.configure(state=DISABLED)
+        self.pause_button.configure(state=NORMAL)
+        self.stop_button.configure(state=NORMAL)
 
         self.progress_var = 0
         self.progress_bar.reset(stop - start)
@@ -741,3 +746,33 @@ class ScanBar(ttk.LabelFrame):
     def progress_stop(self):
         self.progress_bar.speed_avg.clear()
         self.progress_bar.update_now(self.progress_var)
+
+    def check_host(self, host: str) -> bool:
+        self.logger.log(INFO, f"检测域名 [{host}] ...")
+        self.logger.log(INFO, "樱花穿透域名检测...")
+        if host.startswith("frp.") and host.endswith(".top"):
+            self.logger.log(WARNING, f"疑似检测到Sakura Frp域名 ({host})")
+            ret = MessageBox(self.winfo_id(),
+                             f"域名 [{host}] 疑似为Sakura Frp域名, 扫描会封禁你的IP, 请问是否继续?",
+                             "域名警告",
+                             MB_YESNO | MB_ICONWARNING)
+            if ret != IDYES:
+                return False
+
+        self.logger.log(INFO, "开始ping测试...")
+        if ScanBar.ping_host(host):
+            self.logger.log(INFO, "域名存活")
+            return True
+        else:
+            self.logger.log(ERROR, "域名无法连接")
+            MessageBox(self.winfo_id(),
+                       f"域名 [{host}] ping测试不通过",
+                       "域名错误",
+                       MB_OK | MB_ICONERROR)
+            return False
+
+    @staticmethod
+    def ping_host(host: str) -> bool:
+        cmd = f"ping -n 1 {host}"
+        output = getoutput(cmd)
+        return "丢失 = 0" in output
