@@ -608,6 +608,12 @@ class RangeSelector(ttk.Frame):
         return int(self.start + (self.stop - self.start) * _max)
 
 
+def ping_host(host: str) -> bool:
+    cmd = f"ping -n 1 {host}"
+    output = getoutput(cmd)
+    return "丢失 = 0" in output
+
+
 class ScanBar(ttk.LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
         super(ScanBar, self).__init__(master, text="扫描")
@@ -764,7 +770,7 @@ class ScanBar(ttk.LabelFrame):
                 return False
 
         self.logger.log(INFO, "开始ping测试...")
-        if ScanBar.ping_host(host):
+        if ping_host(host):
             self.logger.log(INFO, "域名存活")
             return True
         else:
@@ -774,9 +780,3 @@ class ScanBar(ttk.LabelFrame):
                        "域名错误",
                        MB_OK | MB_ICONERROR)
             return False
-
-    @staticmethod
-    def ping_host(host: str) -> bool:
-        cmd = f"ping -n 1 {host}"
-        output = getoutput(cmd)
-        return "丢失 = 0" in output
