@@ -130,7 +130,9 @@ class Port:
         https://wiki.vg/Server_List_Ping#Status_Response
         """
         try:
-            self.sock = socket.create_connection((self.host, self.port), timeout=self.timeout)
+            self.sock = socket.socket(family=socket.AF_INET)
+            self.sock.settimeout(self.timeout)
+            self.sock.connect((self.host, self.port))
         except (TimeoutError, socket.timeout):
             return {"status": "offline"}
 
@@ -165,7 +167,7 @@ class Port:
         except ConnectionAbortedError:
             return {"status": "error", "msg": "连接被中断", "info": info}
 
-        except JSONDecodeError:
+        except GeneratorExit:
             return {"status": "error", "msg": "JSON解析错误", "info": info}
 
         except UnicodeDecodeError:
@@ -230,7 +232,11 @@ class Port:
         except (ValueError, IndexError):
             raise JSONDecodeError("没有找到JSON数据", "", 0)
         data = data.decode("utf-8")
-        return json_loads(data)
+        try:
+            return json_loads(data)
+        except JSONDecodeError:
+            print("JSON_DECODE_ERROR:", data)
+            raise GeneratorExit
 
     @staticmethod
     def make_ping_packet() -> bytes:
@@ -285,8 +291,8 @@ class ServerInfo:
         self.ping = info["ping"]
 
         # 服务器版本信息
-        self.version_name = data["version"]["name"]
-        self.protocol_version = data["version"]["protocol"]
+        self.version_name = data.get("version", {"name": "未知"})["name"]
+        self.protocol_version = data.get("version", {"protocol": "未知"})["protocol"]
 
         if self.protocol_version == -1:
             self.protocol_info = {}
@@ -326,7 +332,10 @@ class ServerInfo:
             self.favicon_photo = ImageTk.PhotoImage(self.favicon)
 
         # 服务器标题
-        self.description_json = DescriptionParser.parse(data["description"])
+        try:
+            self.description_json = DescriptionParser.parse(data["description"])
+        except KeyError:
+            self.description_json = [{"text": "A Minecraft Server"}]
 
         # 服务器模组
         self.mod_server: bool = bool(data.get("modinfo")) or bool(data.get("forgeData"))
