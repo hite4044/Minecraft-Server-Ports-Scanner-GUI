@@ -167,7 +167,7 @@ class Port:
         except ConnectionAbortedError:
             return {"status": "error", "msg": "连接被中断", "info": info}
 
-        except GeneratorExit:
+        except JSONDecodeError:
             return {"status": "error", "msg": "JSON解析错误", "info": info}
 
         except UnicodeDecodeError:
@@ -228,15 +228,11 @@ class Port:
         """
 
         try:
-            data = data[data.index(b"{"):]
+            data = data[data.index(b'{"'):]
         except (ValueError, IndexError):
             raise JSONDecodeError("没有找到JSON数据", "", 0)
         data = data.decode("utf-8")
-        try:
-            return json_loads(data)
-        except JSONDecodeError:
-            print("JSON_DECODE_ERROR:", data)
-            raise GeneratorExit
+        return json_loads(data)
 
     @staticmethod
     def make_ping_packet() -> bytes:
