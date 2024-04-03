@@ -39,6 +39,11 @@ class InfoWindow(ttk.Toplevel):
         self.base_info.load_data(self.data)
         self.version_info.load_data(self.data)
 
+        self.load_icon()
+
+    def load_icon(self):
+        self.iconphoto(False, self.default_favicon)
+
     def pack_widgets(self):
         self.favicon.pack_configure()
         self.MOTD.configure(height=2)
