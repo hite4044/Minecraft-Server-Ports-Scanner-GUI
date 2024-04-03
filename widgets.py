@@ -16,20 +16,15 @@ ERROR = "error"
 
 class MOTD(ttk.Text):
     def __init__(self, master: tk.Misc):
-        super(MOTD, self).__init__(master, state=DISABLED, height=1, width=50, relief=FLAT)
-        self.data = None
+        super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
     def load_motd(self, data: ServerInfo):
-        self.data = data
-        self.__load_motd()
-
-    def __load_motd(self):
         self.configure(state=NORMAL)
         try:
             self.delete("1.0", END)
         except IndexError:
             pass
-        for extra in self.data.description_json:
+        for extra in data.description_json:
             try:
                 tag = hex(randint(0, 114514))
                 tag_font = Font(family="Unifont", size=12)

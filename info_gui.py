@@ -41,7 +41,7 @@ class InfoWindow(ttk.Toplevel):
 
     def pack_widgets(self):
         self.favicon.pack_configure()
-        self.MOTD.configure(height=2, width=56)
+        self.MOTD.configure(height=2)
         self.MOTD.pack_configure(fill=X)
 
         self.tab.pack(fill=BOTH, expand=True)

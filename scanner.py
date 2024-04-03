@@ -40,7 +40,7 @@ class ServerScanner:
             self.work_queue.put(port)
 
         for thread_id in range(self.thread_num):
-            Thread(target=self.scan_worker, daemon=True).start()
+            Thread(target=self.scan_worker, daemon=True, name=f"Worker-{thread_id}").start()
             sleep(self.timeout / self.thread_num)
 
     def join(self):
@@ -306,9 +306,9 @@ class ServerInfo:
             self.version_type = "release"
 
         # 服务器玩家信息
-        self.player_max = data["players"]["max"]
-        self.player_online = data["players"]["online"]
-        if data["players"].get("sample"):
+        self.player_max = data.get("players", {"max": "未知"})["max"]
+        self.player_online = data.get("players", {"online": "未知"})["online"]
+        if data.get("players", {}).get("sample"):
             self.players = data["players"]["sample"]
             for _ in range(len(self.players)):
                 player = self.players.pop(0)
@@ -361,6 +361,16 @@ class ServerInfo:
 
     def __call__(self) -> dict:
         return self.parsed_data
+
+    def __str__(self) -> str:
+        return self.text
+
+    @property
+    def text(self) -> str:
+        text = ""
+        for extra in self.description_json:
+            text += extra["text"]
+        return text
 
 
 class DescriptionParser:

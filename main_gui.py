@@ -1,6 +1,5 @@
 import re
 import pyglet
-import tkinter
 from widgets import *
 from typing import Dict
 from tkinter import font
@@ -14,6 +13,8 @@ from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
 from time import perf_counter, sleep, time, strftime
 from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO
+
+DEBUG = "debug"
 
 
 def set_default_font():
@@ -45,7 +46,7 @@ class GUI(ttk.Window):
         self.tabs = Tabs(self)
         self.logger = Logger(self.tabs)
         self.server_scanF = ttk.Frame(self.tabs)
-        self.servers = ServerList(self.server_scanF)
+        self.servers = ServerList(self.server_scanF, self.logger)
         self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers)
 
         self.pack_widgets()
@@ -53,7 +54,7 @@ class GUI(ttk.Window):
         Thread(target=load_unifont).start()  # 加载字体
 
     def config_root_window(self):  # 设置窗体
-        self.wm_title("MC服务器扫描器")
+        self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
         Thread(target=self.place_window_center).start()
@@ -126,66 +127,218 @@ class ServerFilter(ttk.Frame):
         self.version_re_var.set(False)
         self.filtration()
 
-    def filtration(self, *_):
+    def get_filter(self):
         version = self.version_entry.get()
         enable_re = self.version_re_var.get()
-        _filter = ServersFilter(version, enable_re)
-        self.master.reload_server(_filter)
+        return ServersFilter(version, enable_re)
+
+    def filtration(self, *_):
+        self.master.reload_server(self.get_filter())
+
+
+class ServerCounter(ttk.Label):
+    def __init__(self, master: Misc):
+        super(ServerCounter, self).__init__(master, text="0/0")
+
+    def update_count(self, show_servers: int, all_servers: int):
+        self.configure(text=f"{show_servers}/{all_servers}")
+
+
+class Logger(ttk.Frame):
+    def __init__(self, master: Misc):
+        super(Logger, self).__init__(master)
+
+        self.logs = []
+        self.levels = {"调试": DEBUG, "信息": INFO, "警告": WARNING, "错误": ERROR}
+        self.levels_res = {v: k for k, v in self.levels.items()}
+        self.log_list = list(self.levels.values())
+        self.log_count = 0
+        self.now_level = INFO
+        self.log_lock = Lock()
+
+        # 信息条
+        self.info_bar = ttk.Frame(self)
+        self.info_bar.pack(fill=X)
+
+        # 日志等级选择框
+        self.select_frame = ttk.Frame(self.info_bar)
+        self.select_text = ttk.Label(self.select_frame, text="日志等级:")
+        self.select_combobox = ttk.Combobox(self.select_frame, values=list(self.levels.keys()), state=READONLY)
+        self.select_combobox.set("信息")
+        self.select_combobox.bind("<<ComboboxSelected>>", self.on_level_change)
+        self.select_text.pack(side=LEFT, padx=5)
+        self.select_combobox.pack(side=LEFT, padx=5)
+        self.select_frame.pack(side=LEFT, padx=5, pady=5)
+
+        # 日志数量显示
+        self.log_count_label = ttk.Label(self.info_bar, text="日志数量: 0")
+        self.log_count_label.pack(side=RIGHT, padx=5, pady=5)
+
+        # 日志显示列表
+        self.list_box = ttk.Treeview(self, columns=["0", "1", "2"], show=HEADINGS)
+        self.list_box.column("0", width=80, anchor=CENTER)
+        self.list_box.column("1", width=21, anchor=CENTER)
+        self.list_box.column("2", width=440)
+        self.list_box.heading("0", text="时间")
+        self.list_box.heading("1", text="等级")
+        self.list_box.heading("2", text="日志", anchor=W)
+        self.list_box.configure(selectmode=BROWSE)
+        self.list_box.bind("<Button-3>", self.on_menu)
+        self.list_box.pack(fill=BOTH, expand=True)
+
+    def set_log_count(self):
+        self.log_count_label.configure(text=f"日志数量: {self.log_count}")
+
+    def log(self, level: str, *values: object, sep: str = " "):
+        with self.log_lock:
+            now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
+            log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
+            self.logs.append(log)
+            if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
+                self.insert_a_log(log)
+            self.log_count += 1
+            self.set_log_count()
+
+    def on_level_change(self, _):
+        self.now_level = self.levels[self.select_combobox.get()]
+        self.list_box.delete(*self.list_box.get_children())
+        for log in self.logs:
+            if self.log_list.index(log["level"]) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
+                self.insert_a_log(log)
+
+    def insert_a_log(self, log: dict):
+        self.list_box.insert("", END, id=log["id"], values=(log["time"], self.levels_res[log["level"]], log["message"]))
+
+    def on_menu(self, event: tk.Event):
+        """弹出右键菜单"""
+        self.list_box.event_generate("<Button-1>")
+        try:
+            select = self.list_box.selection()[0]
+        except IndexError:
+            return
+        log_text = self.list_box.item(select)["values"][2]
+        menu = ttk.Menu()
+        menu.add_command(label="复制", command=lambda: copy_clipboard(log_text))
+        menu.post(event.x_root, event.y_root)
+
+
+class ServerInfoFrame(ttk.Frame):
+    def __init__(self, master: Misc):
+        super(ServerInfoFrame, self).__init__(master)
+
+        self.server_counter = ServerCounter(self)
+        self.server_counter.pack_configure(side=RIGHT, padx=4, pady=4)
+
+    def update_counter(self, show_servers: int, all_servers: int):
+        self.server_counter.update_count(show_servers, all_servers)
 
 
 class ServerList(ttk.LabelFrame):
-    def __init__(self, master: Misc):
+    def __init__(self, master: Misc, logger: Logger):
         super(ServerList, self).__init__(master, text="服务器列表")
-        self.server_px = 72
-        self.add_lock = Lock()
-        self.bind("<Configure>", self.on_resize)
+        self.add_lock = Lock()  # 服务器添加锁
+        self.logger = logger  # 日志对象
 
-        self.server_filter = ServerFilter(self)
-        self.sep = ttk.Separator(self, orient=HORIZONTAL)
-        self.servers_frame = ScrolledFrame(self, autohide=True)
-        self.empty_tip = ttk.Label(self, text="没有服务器", font=("微软雅黑", 25))
+        self.server_map: Dict[ServerInfo, ServerFrame] = {}  # 服务器映射
+        self.show_serverC = 0  # 显示服务器数量
+        self.all_serverC = 0  # 总服务器数量
 
+        self.bind("<Configure>", self.update_info_pos)  # 本体设置
+
+        self.server_filter = ServerFilter(self)  # 服务器筛选器
+        self.sep = ttk.Separator(self, orient=HORIZONTAL)  # 分割线
+        self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
+        self.empty_tip = ttk.Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
+        self.servers_info = ServerInfoFrame(self)  # 服务器数量信息
+
+        self.pack_weights()  # 放置组件
+
+    def pack_weights(self):
         self.server_filter.pack(fill=X, padx=3, pady=3)
         self.sep.pack(fill=X, padx=3, pady=3)
         self.servers_frame.pack(fill=BOTH, expand=True)
-        self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
+        self.update_info_pos()
 
-        self.servers: list[ServerInfo] = []
-        self.server_frames: list[ttk.Frame] = []
-
-    def add_server(self, info: ServerInfo):
+    def add_server(self, info: ServerInfo, _filter: ServersFilter = None):
         with self.add_lock:
-            self.servers.append(info)
             server_frame = ServerFrame(self.servers_frame, info)
-            server_frame.pack(fill=X, expand=True, pady=4)
-            self.server_frames.append(server_frame)
+            server_frame.bind("<<Delete>>", self.on_delete_server)
+            server_frame.bind("<<DeleteAll>>", self.delete_all_servers)
+            can_show, _ = self.can_show(info, _filter)
+            if can_show:
+                server_frame.grid_configure(pady=4)
+                self.show_serverC += 1
+            self.server_map[info] = server_frame
+
+            self.all_serverC += 1
             self.empty_tip.place_forget()
+            self.servers_info.update_counter(self.show_serverC, self.all_serverC)
 
     def reload_server(self, server_filter: ServersFilter):
-        for child in self.server_frames:
-            child.destroy()
-        self.server_frames.clear()
+        self.add_lock.acquire(blocking=True)  # 获得锁
+        timer = time()
+        self.logger.log(DEBUG, "开始重新加载服务器")
+        self.show_serverC = 0  # 重置计数器
 
-        for info in self.servers:
-            try:
-                if server_filter.filter(info):
-                    server_frame = ServerFrame(self.servers_frame, info)
-                    server_frame.pack(fill=X, expand=True, pady=4)
-                    self.server_frames.append(server_frame)
-            except ValueError:
-                MessageBox(self.winfo_id(), "不规范的正则表达式", "服务器过滤错误", MB_ICONERROR | MB_OK)
-                return
+        for info, server_frame in self.server_map.items():
+            can_show, state = self.can_show(info, server_filter)
+            if can_show:
+                if server_frame.grid_info() == {}:
+                    server_frame.grid_configure(pady=4)
+                    self.server_map[info] = server_frame
+                self.show_serverC += 1  # 增加计数器
 
-        self.on_resize()
+            else:
+                server_frame.grid_remove()
+                if state == 1:
+                    self.add_lock.release()
+                    self.logger.log(DEBUG, "过滤正则表达式错误")
+                    MessageBox(self.winfo_id(), "不规范的正则表达式", "服务器过滤错误", MB_ICONERROR | MB_OK)
+                    return
 
-    def on_resize(self, *_):
-        if len(self.server_frames) > 0:
-            try:
-                self.empty_tip.place_forget()
-            except tkinter.TclError:
-                pass
+        self.update_info_pos()  # 更新提示
+        self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
+        self.add_lock.release()  # 释放锁
+        self.logger.log(DEBUG, f"重载服务器完毕, 用时: {round(time() - timer, 2)}s")
+
+    def can_show(self, info: ServerInfo, _filter: ServersFilter = None) -> (bool, int):
+        if _filter is None:
+            _filter = self.servers_filter
+        try:
+            return _filter.filter(info), 0
+        except ValueError:
+            return False, 1
+
+    def update_info_pos(self, *_):
+        if self.show_serverC > 0:
+            self.empty_tip.place_forget()
         else:
             self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
+            self.servers_info.place(relx=0.97, rely=0.98, anchor=SE)
+
+    def on_delete_server(self, event: tk.Event):
+        server_frame: ServerFrame = event.widget
+        self.server_map.pop(server_frame.data)
+        self.all_serverC -= 1
+        self.show_serverC -= 1
+        self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
+
+    def delete_all_servers(self, *_):
+        ret = MessageBox(self.winfo_id(), "确定要删除所有服务器吗？", "删除所有服务器", MB_YESNOCANCEL | MB_ICONWARNING)
+        if ret == IDYES:
+            try:
+                for child in self.server_map.values():
+                    child.destroy()
+                self.server_map.clear()
+                self.show_serverC = 0
+                self.all_serverC = 0
+            except Exception as e:
+                print(e.args)
+            self.update_info_pos()
+
+    @property
+    def servers_filter(self) -> ServersFilter:
+        return self.server_filter.get_filter()
 
 
 class ServerFrame(ttk.Frame):
@@ -256,22 +409,12 @@ class ServerFrame(ttk.Frame):
         menu.add_command(label="复制MOTD", command=self.copy_motd)
         menu.add_separator()
         menu.add_command(label="删除服务器", command=self.delete_server)
-        menu.add_command(label="删除所有服务器", command=self.delete_all_servers)
+        menu.add_command(label="删除所有服务器", command=lambda: self.event_generate("<<DeleteAll>>"))
         menu.post(event.x_root, event.y_root)
 
     def delete_server(self):
+        self.event_generate("<<Delete>>")
         self.destroy()
-
-    def delete_all_servers(self):
-        ret = MessageBox(self.winfo_id(), "确定要删除所有服务器吗？", "删除所有服务器", MB_YESNOCANCEL | MB_ICONWARNING)
-        if ret == IDYES:
-            try:
-                for child in self.master.winfo_children():
-                    if child is not self:
-                        child.destroy()
-                self.destroy()
-            except Exception as e:
-                print(e.args)
 
     def copy_ip(self):
         copy_clipboard(f"{self.data.host}:{self.data.port}")
@@ -387,84 +530,6 @@ class Title(ttk.Label):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
         self.configure(font=("微软雅黑", 24))
-
-
-class Logger(ttk.Frame):
-    def __init__(self, master: Misc):
-        super(Logger, self).__init__(master)
-
-        self.logs = []
-        self.levels = {"信息": INFO, "警告": WARNING, "错误": ERROR}
-        self.levels_res = {v: k for k, v in self.levels.items()}
-        self.log_list = list(self.levels.values())
-        self.log_count = 0
-        self.now_level = INFO
-        self.log_lock = Lock()
-
-        # 信息条
-        self.info_bar = ttk.Frame(self)
-        self.info_bar.pack(fill=X)
-
-        # 日志等级选择框
-        self.select_frame = ttk.Frame(self.info_bar)
-        self.select_text = ttk.Label(self.select_frame, text="日志等级:")
-        self.select_combobox = ttk.Combobox(self.select_frame, values=["信息", "警告", "错误"], state=READONLY)
-        self.select_combobox.set("信息")
-        self.select_combobox.bind("<<ComboboxSelected>>", self.on_level_change)
-        self.select_text.pack(side=LEFT, padx=5)
-        self.select_combobox.pack(side=LEFT, padx=5)
-        self.select_frame.pack(side=LEFT, padx=5, pady=5)
-
-        # 日志数量显示
-        self.log_count_label = ttk.Label(self.info_bar, text="日志数量: 0")
-        self.log_count_label.pack(side=RIGHT, padx=5, pady=5)
-
-        # 日志显示列表
-        self.list_box = ttk.Treeview(self, columns=["0", "1", "2"], show=HEADINGS)
-        self.list_box.column("0", width=80, anchor=CENTER)
-        self.list_box.column("1", width=21, anchor=CENTER)
-        self.list_box.column("2", width=440)
-        self.list_box.heading("0", text="时间")
-        self.list_box.heading("1", text="等级")
-        self.list_box.heading("2", text="日志", anchor=W)
-        self.list_box.configure(selectmode=BROWSE)
-        self.list_box.bind("<Button-3>", self.on_menu)
-        self.list_box.pack(fill=BOTH, expand=True)
-
-    def set_log_count(self):
-        self.log_count_label.configure(text=f"日志数量: {self.log_count}")
-
-    def log(self, level: str, *values: object, sep: str = " "):
-        with self.log_lock:
-            now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
-            log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
-            self.logs.append(log)
-            if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
-                self.insert_a_log(log)
-            self.log_count += 1
-            self.set_log_count()
-
-    def on_level_change(self, _):
-        self.now_level = self.levels[self.select_combobox.get()]
-        self.list_box.delete(*self.list_box.get_children())
-        for log in self.logs:
-            if self.log_list.index(log["level"]) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
-                self.insert_a_log(log)
-
-    def insert_a_log(self, log: dict):
-        self.list_box.insert("", END, id=log["id"], values=(log["time"], self.levels_res[log["level"]], log["message"]))
-
-    def on_menu(self, event: tk.Event):
-        """弹出右键菜单"""
-        self.list_box.event_generate("<Button-1>")
-        try:
-            select = self.list_box.selection()[0]
-        except IndexError:
-            return
-        log_text = self.list_box.item(select)["values"][2]
-        menu = ttk.Menu()
-        menu.add_command(label="复制", command=lambda: copy_clipboard(log_text))
-        menu.post(event.x_root, event.y_root)
 
 
 class TitleBar(ttk.Frame):
@@ -664,6 +729,8 @@ class ScanBar(ttk.LabelFrame):
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
     def callback(self, info: Any):
+        if not self.in_scan:
+            return
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
@@ -756,8 +823,8 @@ class ScanBar(ttk.LabelFrame):
             self.progress_stop()
 
     def progress_stop(self):
-        self.progress_bar.speed_avg.clear()
         self.progress_bar.update_now(self.progress_var)
+        self.progress_bar.finish()
 
     def check_host(self, host: str) -> bool:
         self.logger.log(INFO, f"检测域名 [{host}] ...")
