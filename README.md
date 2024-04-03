@@ -34,3 +34,10 @@
 * 扫描速度实时图表显示
 * MC服务器端口范围图表显示
 
+## 软件预览
+![beautiful_GUI](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/a571046d-78af-4250-b70c-e8a52938f6bd)
+![Colorful MOTD](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/f9f1b704-9f71-42a2-9e62-2a09c864fdbc)
+![ScanControlBar](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/0bf193ce-c7d0-4cec-a7a3-46d9d6708112)
+![ServerFilter](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/7f8bece8-46ad-401c-baa1-fc6ac668066c)
+
+
