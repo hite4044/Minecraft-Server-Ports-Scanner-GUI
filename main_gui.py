@@ -57,7 +57,7 @@ class GUI(ttk.Window):
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
-        Thread(target=self.wm_iconbitmap, args=("assets/icon.ico", )).start()
+        Thread(target=self.wm_iconbitmap, args=("assets/icon.ico",)).start()
         Thread(target=self.place_window_center).start()
 
     def pack_widgets(self):
@@ -382,8 +382,11 @@ class ServerFrame(ttk.Frame):
             self.favicon.configure(image=self.default_favicon)
 
         self.MOTD.load_motd(self.data)
-        self.base_info.configure(text=f"人数:{self.data.player_online}/{self.data.player_max}, "
-                                      f"版本: {self.data.version_name}")
+        base_info = f"人数:{self.data.player_online}/{self.data.player_max}, " \
+                    f"版本: {self.data.version_name}"
+        if len(base_info) > 80:
+            base_info = base_info[:80] + "..."
+        self.base_info.configure(text=base_info)
 
     def pack_weights(self):
         self.MOTD.configure(spacing1=-5, spacing3=1)
