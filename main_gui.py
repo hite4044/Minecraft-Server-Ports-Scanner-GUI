@@ -57,7 +57,7 @@ class GUI(ttk.Window):
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
-        self.wm_iconbitmap("assets/icon.ico")
+        Thread(target=self.wm_iconbitmap, args=("assets/icon.ico", )).start()
         Thread(target=self.place_window_center).start()
 
     def pack_widgets(self):
