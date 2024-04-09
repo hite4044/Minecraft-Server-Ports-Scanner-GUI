@@ -582,6 +582,7 @@ class InfoProgressBar(ttk.Frame):
         self.last_update = time()
 
     def finish(self):
+        self.update_now(self._max)
         self.update_progress_text(0)
 
 
@@ -802,6 +803,7 @@ class ScanBar(ttk.LabelFrame):
         self.scan_obj = ServerScanner()
         self.callback_lock = Lock()
         self.progress_var = 0
+        self.callback_workers = 0
 
         # 进度条
         self.progress_bar = InfoProgressBar(self, interval=0.05, text="扫描进度: ")

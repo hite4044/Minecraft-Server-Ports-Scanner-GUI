@@ -23,6 +23,8 @@ class ServerScanner:
         self.timeout = None
         self.work_queue = Queue()
         self.in_scan = False
+        self.callback_count = 0
+        self.callback_count_lock = Lock()
         self.pause_lock = Lock()  # 暂停锁
         self.worker_count: int = 0  # 线程数
         self.working_worker: int = 0  # 工作中的线程数
@@ -78,7 +80,14 @@ class ServerScanner:
         if raw_info["status"] == "online":
             Thread(target=callback, args=(ServerInfo(raw_info["info"]),)).start()
             return
-        Thread(target=callback, args=(raw_info,)).start()
+        Thread(target=self._callback, args=(raw_info, callback)).start()
+
+    def _callback(self, raw_info, callback: Any):
+        with self.callback_count_lock:
+            self.callback_count += 1
+        callback(raw_info)
+        with self.callback_count_lock:
+            self.callback_count -= 1
 
     def scan_worker(self):
         with self.thread_num_lock:
@@ -108,7 +117,12 @@ class ServerScanner:
             self.worker_count -= 1
             self.working_worker -= 1
         if self.worker_count <= 0:
-            self.in_scan = False
+            Thread(target=self.check_callback_over_thread, daemon=True).start()
+
+    def check_callback_over_thread(self):
+        while self.callback_count > 0:
+            sleep(0.05)
+        self.in_scan = False
 
 
 class Port:
