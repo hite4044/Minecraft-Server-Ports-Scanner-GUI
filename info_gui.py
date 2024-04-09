@@ -184,6 +184,7 @@ class ModInfo(ttk.Frame):
     def __init__(self, master: Misc):
         super(ModInfo, self).__init__(master)
 
+        self.data = None
         self.mod_pack_info = ttk.Label(self)
         self.mod_list = ttk.Treeview(self, show=HEADINGS, columns=["mod", "version"])
         self.mod_info = ttk.Frame(self)

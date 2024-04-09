@@ -2,17 +2,21 @@ import re
 import pyglet
 from widgets import *
 from typing import Dict
-from tkinter import font
 from ttkbootstrap import Style
-from win32gui import MessageBox
 from info_gui import InfoWindow
 from subprocess import getoutput
 from scanner import ServerScanner
 from threading import Thread, Lock
+from tkinter import font, filedialog
+from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
+from json import load as json_load, dump as json_dump, JSONDecodeError
 from time import perf_counter, sleep, time, strftime
-from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO
+from pickle import loads as pickle_loads, dumps as pickle_dumps
+from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONQUESTION, IDNO, \
+    IDCANCEL
+from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText
 
 DEBUG = "debug"
 
@@ -30,6 +34,28 @@ def ping_host(host: str) -> bool:
     cmd = f"ping -n 1 {host}"
     output = getoutput(cmd)
     return "丢失 = 0" in output
+
+
+def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
+    def callback(hwnd: int, _):
+        if GetWindowText(hwnd) == "是(&Y)":
+            SetWindowText(hwnd, left)
+        elif GetWindowText(hwnd) == "否(&N)":
+            SetWindowText(hwnd, right)
+
+    main_win = FindWindow("TkTopLevel", "MC服务器扫描器")
+    timer = time()
+    while True:
+        msg_win = FindWindowEx(None, None, "#32770", "加载方式 ⠀")
+        if msg_win == 0:
+            if time() - timer > timeout:
+                return
+            sleep(0.1)
+            continue
+        if GetParent(msg_win) != main_win:
+            return
+        EnumChildWindows(msg_win, callback, None)
+        break
 
 
 class GUI(ttk.Window):
@@ -208,7 +234,12 @@ class Logger(ttk.Frame):
                 self.insert_a_log(log)
 
     def insert_a_log(self, log: dict):
-        self.list_box.insert("", END, id=log["id"], values=(log["time"], self.levels_res[log["level"]], log["message"]))
+        self.list_box.insert("",
+                             END,
+                             id=log["id"],
+                             values=(log["time"],
+                                     self.levels_res[log["level"]],
+                                     log["message"]))
 
     def on_menu(self, event: tk.Event):
         """弹出右键菜单"""
@@ -234,6 +265,80 @@ class ServerInfoFrame(ttk.Frame):
         self.server_counter.update_count(show_servers, all_servers)
 
 
+class RecordBar(ttk.Frame):
+    def __init__(self, master: Misc, server_list: Any):
+        super(RecordBar, self).__init__(master)
+        self.server_list = server_list
+
+        self.load_button = ttk.Button(self, text="加载", command=self.load_record, style="success-outline")
+        self.save_button = ttk.Button(self, text="保存", command=self.save_record, style="success-outline")
+
+        self.pack_weights()
+
+    def pack_weights(self):
+        self.load_button.pack_configure(side=LEFT)
+        self.save_button.pack_configure(side=RIGHT)
+
+    def load_record(self):
+        fp = filedialog.askopenfilename(title="选择扫描记录文件",
+                                        filetypes=[("Server Scan Record", "*.scrd"),
+                                                   ("JSON", "*.json"),
+                                                   ("All Files", "*.*")])
+        if fp == "":
+            return
+        try:
+            # 读取数据
+            with open(fp, "r", encoding="utf-8") as f:
+                data = json_load(f)
+            if not isinstance(data, list):
+                MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                return
+
+            # 询问加载方式
+            Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
+            ret = MessageBox(self.winfo_id(), "怎样加载扫描记录?", "加载方式 ⠀", MB_YESNOCANCEL | MB_ICONQUESTION)
+            if ret == IDYES:
+                pass
+            elif ret == IDNO:
+                self.server_list.delete_all_servers()
+            elif ret == IDCANCEL:
+                return
+
+            # 加载记录
+            for server_obj_bytes in data:
+                try:
+                    server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                    server_info.load_favicon_photo()
+                    self.server_list.add_server(server_info)
+                except KeyError:
+                    MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    return
+        except JSONDecodeError:
+            MessageBox(self.winfo_id(), "非JSON文本", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+        except UnicodeDecodeError:
+            MessageBox(self.winfo_id(), "文件内容解码错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+
+    def save_record(self):
+        fp = filedialog.asksaveasfilename(confirmoverwrite=True,
+                                          title="选择扫描记录文件",
+                                          defaultextension=".scrd",
+                                          initialfile="扫描记录",
+                                          filetypes=[("Server Scan Record", "*.scrd"),
+                                                     ("JSON", "*.json"),
+                                                     ("All Files", "*.*")])
+        if fp == "":
+            return
+
+        data = []
+        for server_info in self.server_list.server_map.keys():
+            copied_info: ServerInfo = copy(server_info)
+            copied_info.favicon_photo = None
+            data.append(b64encode(pickle_dumps(copied_info)).decode("utf-8"))
+
+        with open(file=fp, mode="w+", encoding="utf-8") as f:
+            json_dump(data, f)
+
+
 class ServerList(ttk.LabelFrame):
     def __init__(self, master: Misc, logger: Logger):
         super(ServerList, self).__init__(master, text="服务器列表")
@@ -251,6 +356,7 @@ class ServerList(ttk.LabelFrame):
         self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
         self.empty_tip = ttk.Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
         self.servers_info = ServerInfoFrame(self)  # 服务器数量信息
+        self.record_bar = RecordBar(self, self)
 
         self.pack_weights()  # 放置组件
 
@@ -258,6 +364,7 @@ class ServerList(ttk.LabelFrame):
         self.server_filter.pack(fill=X, padx=3, pady=3)
         self.sep.pack(fill=X, padx=3, pady=3)
         self.servers_frame.pack(fill=BOTH, expand=True)
+        self.record_bar.pack_configure(side=BOTTOM, fill=X)
         self.update_info_pos()
 
     def add_server(self, info: ServerInfo, _filter: ServersFilter = None):
@@ -315,7 +422,7 @@ class ServerList(ttk.LabelFrame):
             self.empty_tip.place_forget()
         else:
             self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
-            self.servers_info.place(relx=0.97, rely=0.98, anchor=SE)
+            self.servers_info.place(relx=0.98, rely=0.9, anchor=SE)
 
     def on_delete_server(self, event: tk.Event):
         server_frame: ServerFrame = event.widget

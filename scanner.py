@@ -4,11 +4,11 @@ import varint
 from io import BytesIO
 from struct import pack
 from copy import deepcopy
+from typing import List, Any
 from time import time, sleep
 from base64 import b64decode
 from PIL import Image, ImageTk
 from queue import Queue, Empty
-from typing import List, Dict, Any
 from threading import Thread, Lock
 from json import loads as json_loads
 from json.decoder import JSONDecodeError
@@ -277,7 +277,7 @@ class ServerInfo:
     用于解析MC服务器的JSON数据
     """
 
-    def __init__(self, info: dict) -> None:
+    def __init__(self, info: dict, load_favicon: bool = True) -> None:
         data = info["details"]
         self.parsed_data = data
 
@@ -293,7 +293,13 @@ class ServerInfo:
         if self.protocol_version == -1:
             self.protocol_info = {}
         else:
-            self.protocol_info: dict = [ver for ver in vars.protocol_map if ver["version"] == self.protocol_version][0]
+            for ver in vars.protocol_map:
+                if ver["version"] == self.protocol_version:
+                    self.protocol_info: dict = ver
+                    break
+            else:
+                self.protocol_info = {}
+
         self.protocol_name = self.protocol_info.get("minecraftVersion", "未知")
         self.protocol_major_name = self.protocol_info.get("majorVersion", "未知")
 
@@ -319,13 +325,13 @@ class ServerInfo:
             self.players = []
 
         # 服务器图标信息
-        self.favicon = data.get("favicon")
-        self.favicon_photo = None
-        self.has_favicon = bool(self.favicon)
+        self.favicon_data = data.get("favicon")
+        self.favicon_photo = self.favicon = None
+        self.has_favicon = bool(self.favicon_data)
         if self.has_favicon:
-            self.favicon = b64decode(self.favicon.replace("data:image/png;base64,", ""))
-            self.favicon = Image.open(BytesIO(self.favicon), formats=["PNG"])
-            self.favicon_photo = ImageTk.PhotoImage(self.favicon)
+            self.favicon_data = b64decode(self.favicon_data.replace("data:image/png;base64,", ""))
+            if load_favicon:
+                self.load_favicon_photo()
 
         # 服务器标题
         try:
@@ -364,6 +370,11 @@ class ServerInfo:
 
     def __str__(self) -> str:
         return self.text
+
+    def load_favicon_photo(self):
+        if self.has_favicon:
+            self.favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
+            self.favicon_photo = ImageTk.PhotoImage(self.favicon)
 
     @property
     def text(self) -> str:
