@@ -36,6 +36,11 @@ class ServerScanner:
         self.host = host
 
     def run(self, port_range: range, callback: object):
+        while not self.work_queue.empty():
+            try:
+                self.work_queue.get(block=False)
+            except Empty:
+                break
         self.in_scan = True
         self.callback = callback
         for port in port_range:

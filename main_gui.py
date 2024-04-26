@@ -1,19 +1,20 @@
 import re
 import pyglet
 from widgets import *
+from win_tool import *
+from ping3 import ping
 from typing import Dict
 from ttkbootstrap import Style
 from info_gui import InfoWindow
-from subprocess import getoutput
 from scanner import ServerScanner
 from threading import Thread, Lock
 from tkinter import font, filedialog
 from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
-from json import load as json_load, dump as json_dump, JSONDecodeError
 from time import perf_counter, sleep, time, strftime
 from pickle import loads as pickle_loads, dumps as pickle_dumps
+from json import load as json_load, dump as json_dump, JSONDecodeError
 from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONQUESTION, IDNO, \
     IDCANCEL
 from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText
@@ -28,12 +29,6 @@ def set_default_font():
 def load_unifont():
     pyglet.options['win32_gdi_font'] = True
     pyglet.font.add_file("assets/Unifont.otf")
-
-
-def ping_host(host: str) -> bool:
-    cmd = f"ping -n 1 {host}"
-    output = getoutput(cmd)
-    return "丢失 = 0" in output
 
 
 def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
@@ -56,6 +51,16 @@ def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
             return
         EnumChildWindows(msg_win, callback, None)
         break
+
+
+def get_hwnd_main_hwnd(hwnd: int):
+    while True:
+        print(hwnd, "P:", GetParent(hwnd))
+        if GetParent(hwnd) != 0:
+            hwnd = GetParent(hwnd)
+        else:
+            break
+    return hwnd
 
 
 class GUI(ttk.Window):
@@ -83,6 +88,7 @@ class GUI(ttk.Window):
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
+        self.wm_resizable(False, False)
         Thread(target=self.wm_iconbitmap, args=("assets/icon.ico",)).start()
         Thread(target=self.place_window_center).start()
 
@@ -541,7 +547,7 @@ class InfoProgressBar(ttk.Frame):
         self.last_value = 0
         self.last_update = time()
         self.speed_avg = []
-        self._max = 0
+        self.max_ = 0
         self.interval = interval
 
         self.text = ttk.Label(self, text=text)
@@ -556,7 +562,7 @@ class InfoProgressBar(ttk.Frame):
         self.last_value = 0
         self.last_update = time()
         self.speed_avg.clear()
-        self._max = _max
+        self.max_ = _max
         self.progress_text.configure(text="0 ports/s")
         self.progress.set_percentage(0, "0%")
 
@@ -573,7 +579,7 @@ class InfoProgressBar(ttk.Frame):
         elif len(self.speed_avg) == 0:
             self.speed_avg.append(0)
 
-        percentage = value / self._max
+        percentage = value / self.max_
         self.progress.set_percentage(percentage, f"{round(percentage * 100, 2)}%")
         self.update_progress_text(sum(self.speed_avg) / len(self.speed_avg))
 
@@ -582,7 +588,7 @@ class InfoProgressBar(ttk.Frame):
         self.last_update = time()
 
     def finish(self):
-        self.update_now(self._max)
+        self.update_now(self.max_)
         self.update_progress_text(0)
 
 
@@ -594,27 +600,38 @@ class ProgressBar(ttk.Canvas):
         self.bind("<<ThemeChanged>>", self.change_color)
         self.percentage = 0
         self.text = text
-        self.redraw()
+        self.now_elements = []
+        self.last_elements = []
+
+        self.text_id = self.create_text(self.winfo_width() // 2, 13, text=self.text, fill=self.color.fg)
+        self.last_elements.append(self.text_id)
 
     def change_color(self, *_):
         self.color = Style().colors
         self.redraw()
 
     def redraw(self, *_):
-        self.delete(ALL)
+        self.now_elements.clear()
         width = self.winfo_width()
         bar_x = int((width - 4) * self.percentage)
         if bar_x == 1:
-            self.create_line(1, 1, 1, 26, fill=self.color.success)
+            self.now_elements.append(self.create_line(1, 1, 1, 26, fill=self.color.success))
         elif bar_x > 1:
-            self.create_rectangle(1, 1, bar_x, 26 - 2, fill=self.color.success, outline=self.color.success)  # 06B025
+            self.now_elements.append(self.create_rectangle(1, 1, bar_x, 26 - 2, fill=self.color.success,
+                                                           outline=self.color.success))
 
-        self.create_rectangle(0, 0, width - 1, 26 - 1, outline=self.color.border)
-        self.create_text(width // 2, 13, text=self.text, fill=self.color.fg)
+        self.now_elements.append(self.create_rectangle(0, 0, width - 1, 26 - 1, outline=self.color.border))
+        self.text_id = self.create_text(width // 2, 13, text=self.text, fill=self.color.fg)
+        self.now_elements.append(self.text_id)
+
+        if self.last_elements:
+            self.delete(*self.last_elements)
+        self.last_elements = self.now_elements.copy()
 
     def set_percentage(self, percentage: float, text: str = None):
         self.percentage = percentage
         self.text = text if text is not None else self.text
+        self.itemconfig(self.text_id, text=self.text)
         self.redraw()
 
 
@@ -804,6 +821,8 @@ class ScanBar(ttk.LabelFrame):
         self.callback_lock = Lock()
         self.progress_var = 0
         self.callback_workers = 0
+        self.taskbar = None
+        self.after(100, self.taskbar_create)
 
         # 进度条
         self.progress_bar = InfoProgressBar(self, interval=0.05, text="扫描进度: ")
@@ -832,7 +851,7 @@ class ScanBar(ttk.LabelFrame):
 
         # 扫描控制 Frame
         self.buttons = ttk.Frame(self)
-        self.start_button = ttk.Button(self.buttons, text="开始扫描", command=self.start_scan)
+        self.start_button = ttk.Button(self.buttons, text="开始扫描", command=self.start_scan, state=DISABLED)
         self.pause_button = PauseButton(self.buttons, self.resume_scan, self.pause_scan, state=DISABLED)
         self.stop_button = ttk.Button(self.buttons, text="停止", command=self.stop_scan, state=DISABLED)
 
@@ -841,12 +860,17 @@ class ScanBar(ttk.LabelFrame):
         self.pause_button.pack(fill=X, expand=True, pady=2)
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
+    def taskbar_create(self):
+        self.taskbar = TaskbarApi(FindWindow("TkTopLevel", "MC服务器扫描器"))
+        self.start_button.configure(state=NORMAL)
+
     def callback(self, info: Any):
         if not self.in_scan:
             return
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
+            self.taskbar.SetProgressValue(self.progress_var, self.progress_bar.max_)
             if isinstance(info, ServerInfo):
                 self.server_list.add_server(info)
                 self.logger.log(INFO, f"[{info.port}]:", "检测到MC服务器")
@@ -877,6 +901,7 @@ class ScanBar(ttk.LabelFrame):
         self.scan_obj.config(host, timeout, thread_num)
         Thread(target=self.scan_obj.run, args=(range(start, stop), self.callback)).start()
         Thread(target=self.check_over_thread, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
     def pause_scan(self):
         def task():
@@ -890,6 +915,7 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_PAUSED)
 
     def resume_scan(self):
         def task():
@@ -902,6 +928,7 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
     def stop_scan(self):
         if not self.in_scan:
@@ -913,14 +940,17 @@ class ScanBar(ttk.LabelFrame):
         def stop_task():
             self.in_scan = False
             self.scan_obj.stop()
+            self.logger.log(INFO, "停止扫描")
             while self.scan_obj.worker_count != 0:
                 sleep(0.1)
                 self.logger.log(INFO, "等待线程结束, 剩余工作线程线程数量:", self.scan_obj.worker_count)
             self.logger.log(INFO, "线程已全部结束")
             self.start_button.configure(state=NORMAL)
+            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
             self.progress_stop()
 
         Thread(target=stop_task).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_INDETERMINATE)
 
     def check_over_thread(self):
         if not self.in_scan:
@@ -934,10 +964,11 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=DISABLED)
             self.start_button.configure(state=NORMAL)
             self.progress_stop()
+            FlashWindowCount(FindWindow("TkTopLevel", "MC服务器扫描器"))
 
     def progress_stop(self):
         self.progress_bar.update_now(self.progress_var)
-        self.progress_bar.finish()
+        # self.progress_bar.finish()
 
     def check_host(self, host: str) -> bool:
         self.logger.log(INFO, f"检测域名 [{host}] ...")
@@ -952,8 +983,9 @@ class ScanBar(ttk.LabelFrame):
                 return False
 
         self.logger.log(INFO, "开始ping测试...")
-        if ping_host(host):
-            self.logger.log(INFO, "域名存活")
+        delay = ping(host)
+        if delay is not None:
+            self.logger.log(INFO, f"域名存活, 延迟: {round(delay * 1000, 2)} ms")
             return True
         else:
             self.logger.log(ERROR, "域名无法连接")

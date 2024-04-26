@@ -13,6 +13,7 @@ class InfoWindow(ttk.Toplevel):
         self.default_favicon = None
         self.data = data
         self.load_window_title()
+        self.wm_resizable(True, True)
 
         self.favicon = ttk.Label(self)
         self.MOTD = MOTD(self)
@@ -81,14 +82,14 @@ class PlayersInfo(ttk.Frame):
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
             self.tip = ToolTip(self.player_list, "UUID: " + data.players[0]["id"])
-            self.player_list.bind("<Motion>", self.show_tip)
+            self.player_list.bind("<Motion>", self.show_tip, add="+")
 
     def show_tip(self, event: tk.Event):
         item = self.player_list.nearest(event.y)
         if item == -1:
             return
         uuid = [player for player in self.data.players if player["name"] == self.player_list.get(item)][0]['id']
-        self.tip.hide_tip()
+        self.tip.toplevel.destory()
         self.tip = ToolTip(self.player_list, "UUID: " + uuid)
 
 
