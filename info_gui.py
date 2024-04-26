@@ -81,7 +81,7 @@ class PlayersInfo(ttk.Frame):
         for player in data.players:
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
-            self.tip = ToolTip(self.player_list, "UUID: " + data.players[0]["id"])
+            self.tip = None
             self.player_list.bind("<Motion>", self.show_tip, add="+")
 
     def show_tip(self, event: tk.Event):
@@ -89,8 +89,9 @@ class PlayersInfo(ttk.Frame):
         if item == -1:
             return
         uuid = [player for player in self.data.players if player["name"] == self.player_list.get(item)][0]['id']
-        self.tip.toplevel.destory()
-        self.tip = ToolTip(self.player_list, "UUID: " + uuid)
+        if self.tip is not None and self.tip.toplevel is not None:
+            self.tip.toplevel.destroy()
+        self.tip = ToolTip(self.player_list, "UUID: " + uuid, delay=0, alpha=0.8)
 
 
 class BaseInfo(ttk.Frame):
