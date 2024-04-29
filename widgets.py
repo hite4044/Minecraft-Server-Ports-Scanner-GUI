@@ -137,7 +137,8 @@ class TextCombobox(ttk.Frame):
         self.text = ttk.Label(self, text=tip)
         self.combobox = ttk.Combobox(self, values=value)
 
-        self.combobox.current(0)
+        if len(value) > 0:
+            self.combobox.current(0)
 
         self.text.pack(side=LEFT)
         self.combobox.pack(side=LEFT, fill=X, expand=True)

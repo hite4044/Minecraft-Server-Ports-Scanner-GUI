@@ -12,12 +12,14 @@ from tkinter import font, filedialog
 from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
+from comtypes import CoInitialize, CoUninitialize
 from time import perf_counter, sleep, time, strftime
 from pickle import loads as pickle_loads, dumps as pickle_dumps
 from json import load as json_load, dump as json_dump, JSONDecodeError
 from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONQUESTION, IDNO, \
     IDCANCEL
-from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText
+from sys import stderr
+from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText, GetClassName
 
 DEBUG = "debug"
 
@@ -822,7 +824,7 @@ class ScanBar(ttk.LabelFrame):
         self.progress_var = 0
         self.callback_workers = 0
         self.taskbar = None
-        self.after(100, self.taskbar_create)
+        Thread(target=self.taskbar_create, daemon=True).start()
 
         # 进度条
         self.progress_bar = InfoProgressBar(self, interval=0.05, text="扫描进度: ")
@@ -861,8 +863,29 @@ class ScanBar(ttk.LabelFrame):
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
     def taskbar_create(self):
-        self.taskbar = TaskbarApi(FindWindow("TkTopLevel", "MC服务器扫描器"))
+        CoInitialize()
+        timeout = 2.0
+        timer = perf_counter()
+        main_window = 0
+        while perf_counter() - timer < timeout:
+            hwnd = self.winfo_id()
+            while True:
+                parent = GetParent(hwnd)
+                if parent == 0:
+                    break
+                else:
+                    hwnd = copy(parent)
+            if GetWindowText(hwnd) == "MC服务器扫描器" and GetClassName(hwnd) == "TkTopLevel":
+                self.taskbar = TaskbarApi(hwnd)
+                main_window = copy(hwnd)
+                break
+            sleep(0.05)
+        else:
+            print("main_gui.taskbar_create: Main Window Not Found!", file=stderr)
+        print(f"Done! Found main window, use: {round((perf_counter() - timer) * 1000, 2)} ms, hWnd: {main_window}")
+        self.taskbar = TaskbarApi(main_window)
         self.start_button.configure(state=NORMAL)
+        CoUninitialize()
 
     def callback(self, info: Any):
         if not self.in_scan:

@@ -20,4 +20,3 @@ class Assets:
             for x in range(BG_COUNT):
                 bg.paste(image, (x * width, y * height))
         return PhotoImage(bg)
-

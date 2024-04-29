@@ -1,6 +1,5 @@
 from enum import Enum
 import comtypes.client as cc
-from win32con import FLASHW_ALL
 from win32gui import FlashWindowEx
 cc.GetModule(r"assets\TaskbarLib.tlb")
 import comtypes.gen.TaskbarLib as TaskbarLib
