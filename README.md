@@ -1,7 +1,10 @@
 # *Minecraft-Server-Ports-Scanner-GUI*
 
-## _免责声明：这仅用于教育目的，我不对这些工具的任何滥用负责！_
-## 请尊重作者及他人，严禁出售、倒卖或进行任何牟利行为。
+> [!IMPORTANT]
+> 
+> ## _免责声明：这仅用于教育目的，我不对这些工具的任何滥用负责！_
+> 
+> ## 请尊重作者及他人，严禁出售、倒卖或进行任何牟利行为。
 
 ### 简介
 
@@ -31,6 +34,16 @@
 * 信息窗口可重新获取信息并加载
 * 扫描速度实时图表显示
 * MC服务器端口范围图表显示
+
+## 配置环境与使用
+
+- 下载源码并运行：
+
+> 您可以使用`git clone`等方式克隆本仓库，在本仓库目录下运行`pip install -r requirements.txt`安装所有本项目需要的模块，并运行`main.py`.
+
+- 直接下载可执行文件:
+
+> 您可以前往 Releases 页面，直接下载本项目的可执行文件，直接点击运行。通常地，Windows 用户请下载`MCSPS-xxx-win-amd64.exe`.
 
 ## 软件预览
 ![beautiful_GUI](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/a571046d-78af-4250-b70c-e8a52938f6bd)
