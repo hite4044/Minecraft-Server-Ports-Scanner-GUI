@@ -63,7 +63,10 @@ class ServerScanner:
             sleep(0.1)
 
     def resume(self):
-        self.pause_lock.release()
+        try:
+            self.pause_lock.release()
+        except RuntimeError:
+            return
 
     def resume_and_wait(self):
         self.resume()
@@ -152,7 +155,7 @@ class Port:
             self.sock = socket.socket(family=socket.AF_INET)
             self.sock.settimeout(self.timeout)
             self.sock.connect((self.host, self.port))
-        except (TimeoutError, socket.timeout):
+        except (TimeoutError, socket.timeout, socket.gaierror):
             return {"status": "offline"}
 
         info = {"host": self.host, "port": self.port}
