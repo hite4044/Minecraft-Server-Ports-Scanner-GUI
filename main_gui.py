@@ -1014,7 +1014,7 @@ class ScanBar(ttk.LabelFrame):
     def check_host(self, host: str) -> bool:
         self.logger.log(INFO, f"检测域名 [{host}] ...")
         self.logger.log(INFO, "樱花穿透域名检测...")
-        if host.startswith("frp.") and host.endswith(".top"):
+        if host.startswith("frp-") and host.endswith(".top"):
             self.logger.log(WARNING, f"疑似检测到Sakura Frp域名 ({host})")
             ret = MessageBox(self.winfo_id(),
                              f"域名 [{host}] 疑似为Sakura Frp域名, 扫描会封禁你的IP, 请问是否继续?",

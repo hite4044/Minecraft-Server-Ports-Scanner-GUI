@@ -464,36 +464,3 @@ class DescriptionParser:
                 else:
                     extras.append(sub_extras)
             return extras
-
-
-def test():
-    r"""obj = json_load(open(r"D:\儿子文件\资源\扫描结果.json", encoding="utf-8"))
-    for info in obj:
-        details: dict = eval(b64decode(info['details']).decode("utf-8"))
-        # 做测试
-        try:
-            p_info = ServerInfo(details)
-            print(p_info.online_server)
-            print("-" * 50)
-        except TimeoutError as e:
-            print(details)
-            print(e.__class__.__name__)
-            print("-" * 50)"""
-    port = Port()
-    print(port.get_server_info())
-
-
-def temp2(info):
-    if isinstance(info, dict):
-        if info["status"] != "offline":
-            print(info)
-    if isinstance(info, ServerInfo):
-        print(info.__dict__)
-
-
-"""print("START")
-s = ServerScanner()
-s.config("cn-yw-plc-1.openfrp.top", 0.7, 128)
-s.run(port_range=range(20500, 24000), callback=temp2)
-s.join()
-print("FINISH")"""
