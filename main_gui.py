@@ -13,15 +13,21 @@ from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
 from comtypes import CoInitialize, CoUninitialize
-from time import perf_counter, sleep, time, strftime
+from time import perf_counter, sleep, time, strftime, localtime
 from pickle import loads as pickle_loads, dumps as pickle_dumps
 from json import load as json_load, dump as json_dump, JSONDecodeError
 from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONQUESTION, IDNO, \
     IDCANCEL
 from sys import stderr
-from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText, GetClassName
+from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText, \
+    GetClassName
 
 DEBUG = "debug"
+scanbar: Any = None
+
+
+def get_now_time() -> str:
+    return strftime("%Y-%m-%d_%H-%M-%S", localtime())
 
 
 def set_default_font():
@@ -67,6 +73,7 @@ def get_hwnd_main_hwnd(hwnd: int):
 
 class GUI(ttk.Window):
     def __init__(self):
+        global scanbar
         super(GUI, self).__init__()
 
         timer = perf_counter()
@@ -80,7 +87,7 @@ class GUI(ttk.Window):
         self.logger = Logger(self.tabs)
         self.server_scanF = ttk.Frame(self.tabs)
         self.servers = ServerList(self.server_scanF, self.logger)
-        self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers)
+        self.scan_bar = scanbar = ScanBar(self.server_scanF, self.logger, self.servers)
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
@@ -298,9 +305,11 @@ class RecordBar(ttk.Frame):
             # 读取数据
             with open(fp, "r", encoding="utf-8") as f:
                 data = json_load(f)
-            if not isinstance(data, list):
-                MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误", MB_OK | MB_ICONERROR)
-                return
+            if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
+                if not isinstance(data, list):
+                    MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    return
+                data = {"servers": data}
 
             # 询问加载方式
             Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
@@ -312,8 +321,8 @@ class RecordBar(ttk.Frame):
             elif ret == IDCANCEL:
                 return
 
-            # 加载记录
-            for server_obj_bytes in data:
+            # 加载服务器记录
+            for server_obj_bytes in data["servers"]:
                 try:
                     server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
                     server_info.load_favicon_photo()
@@ -321,6 +330,10 @@ class RecordBar(ttk.Frame):
                 except KeyError:
                     MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
                     return
+            # 加载配置
+            config = data.get("configs")
+            if config:
+                scanbar.set_config(config)
         except JSONDecodeError:
             MessageBox(self.winfo_id(), "非JSON文本", "扫描记录加载错误", MB_OK | MB_ICONERROR)
         except UnicodeDecodeError:
@@ -330,18 +343,19 @@ class RecordBar(ttk.Frame):
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
                                           title="选择扫描记录文件",
                                           defaultextension=".scrd",
-                                          initialfile="扫描记录",
+                                          initialfile="扫描记录_" + get_now_time(),
                                           filetypes=[("Server Scan Record", "*.scrd"),
                                                      ("JSON", "*.json"),
                                                      ("All Files", "*.*")])
         if fp == "":
             return
 
-        data = []
+        servers = []
         for server_info in self.server_list.server_map.keys():
             copied_info: ServerInfo = copy(server_info)
             copied_info.favicon_photo = None
-            data.append(b64encode(pickle_dumps(copied_info)).decode("utf-8"))
+            servers.append(b64encode(pickle_dumps(copied_info)).decode("utf-8"))
+        data = {"servers": servers, "configs": scanbar.get_config()}
 
         with open(file=fp, mode="w+", encoding="utf-8") as f:
             json_dump(data, f)
@@ -861,6 +875,20 @@ class ScanBar(ttk.LabelFrame):
         self.start_button.pack(fill=X, expand=True, pady=2)
         self.pause_button.pack(fill=X, expand=True, pady=2)
         self.stop_button.pack(fill=X, expand=True, pady=2)
+
+    def get_config(self) -> dict:
+        return {
+            "host": self.host_input.get(),
+            "timeout": self.timeout_input.get_value(),
+            "thread_num": self.thread_num_input.get_value(),
+            "range": self.range_input.get()
+        }
+
+    def set_config(self, config: dict):
+        self.host_input.set(config["host"])
+        self.timeout_input.set_value(config["timeout"])
+        self.thread_num_input.set_value(config["thread_num"])
+        self.range_input.set(*config["range"])
 
     def taskbar_create(self):
         CoInitialize()

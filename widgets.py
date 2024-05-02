@@ -98,6 +98,11 @@ class EntryScale(ttk.Frame):
     def get_value(self):
         return self.fmt(self.scale.cget("value"))
 
+    def set_value(self, value):
+        self.scale.configure(value=value)
+        self.entry.delete(0, END)
+        self.entry.insert(0, str(value))
+
 
 class EntryScaleInt(EntryScale):
     def __init__(self, master: Misc, _min: int, _max: int, value: int, text: str):
@@ -124,10 +129,12 @@ class TextEntry(ttk.Frame):
     def get(self):
         return self.entry.get()
 
-    def delete(self,
-               first,
-               last) -> None:
+    def delete(self, first, last) -> None:
         self.entry.delete(first, last)
+
+    def set(self, text: str):
+        self.entry.delete(0, END)
+        self.entry.insert(0, text)
 
 
 class TextCombobox(ttk.Frame):
@@ -145,6 +152,10 @@ class TextCombobox(ttk.Frame):
 
     def get(self) -> str:
         return self.combobox.get()
+
+    def set(self, text: str):
+        self.combobox.delete(0, END)
+        self.combobox.insert(0, text)
 
 
 class Tabs(ttk.Notebook):
