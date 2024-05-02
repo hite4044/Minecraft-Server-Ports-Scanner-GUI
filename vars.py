@@ -1,40 +1,7 @@
+import os
+import json
 from typing import List, Dict
 
-servers: List[str] = ["s2.wemc.cc",  # 220.198.120.151
-                      "dx31.starmc.cn",
-                      "mc48.starmc.cn",
-                      "119.188.245.162",
-                      "m6.ctymc.cn",
-                      "rpg.mc1314.cc",
-                      "mcpvp.asia",
-                      "cn-yw-plc-1.openfrp.top",  # 122.242.149.92
-                      'play.simpfun.cn',
-                      "ningbo-3689d402.of-7af93c01.shop",
-                      "cn-hz-bgp-1.of-7af93c01.shop",
-                      "cn-hk-bgp-4.openfrp.top",  # 191.96.240.164
-                      "ganzhou-eb7c59a5.of-7af93c01.shop",
-                      "cn-he-plc-2.of-7af93c01.shop",
-                      "cn-bj-plc-2.of-7af93c01.shop",
-                      "shenzhen-a8bf9282.of-7af93c01.shop",
-                      "ipyingshe.com",  # 111.45.28.82
-                      "xiaomy.net",  # 112.16.229.54
-                      "yuming.net",  # 118.139.160.68
-                      "dongtaiyuming.net",  # 203.107.44.133
-                      'chiyu.red',
-                      'dx.wdsj.net',
-                      'hiaxn.cn',
-                      'kazer.team',
-                      'lolita.bgp.originera.cn',
-                      'lt.wdsj.net',
-                      'magicalserver.tpddns.cn',
-                      'magicmc.cn',
-                      'mc.163mc.cn',
-                      'mc.ariacraft.net',
-                      'mc.kilor.cn',
-                      'mc.remiaft.com',
-                      'mc20.rhymc.com',
-                      'mc3.rhymc.com',
-                      'mhxj.club']
 color_map: Dict[str, str] = {
     "0": "black",
     "1": "dark_blue",
@@ -3957,3 +3924,71 @@ protocol_map: List[Dict[str, str]] = [
         "majorVersion": "1.8"
     }
 ]
+
+
+# 需要扫描的服务器地址列表
+ServerAddressList: List[str] = []
+
+
+class ServerAddressOperator:
+    # scan_server_address.json
+    scanServerAddresssJson = os.path.join(os.getcwd(), "config", "scan_server_address.json")
+
+    def __init__(self) -> None:
+        """需要扫描的服务器地址操作器"""
+        if os.path.isfile(self.scanServerAddresssJson) is False:
+            with open(self.scanServerAddresssJson, "w+", encoding="utf-8") as wfp:
+                wfp.write("{\n\t\"address_list\": []\n}")
+
+    def readConfigFileList(self) -> List[str]:
+        """
+        读取scan_server_address.json数据，并赋值ServerList
+        :return List[str]
+        """
+        global ServerAddressList
+        result: bool = []
+        
+        try:
+            with open(self.scanServerAddresssJson, "r", encoding="utf-8") as rfp:
+                json_data: dict = json.loads(rfp.read())
+                address_list: List[str] = json_data.get('address_list')
+
+                # 未读取到address_list
+                if not address_list:
+                    return result
+                
+                # 读取到数据后
+                if address_list:
+                    ServerAddressList = address_list
+        except Exception as e:
+            print("读取 scan_server_address.json 文件时：", e)
+        finally:
+            return result
+        
+    def writeAddressToConfigFile(self, address: str) -> bool:
+        """
+        写入服务器地址至scan_server_address.json文件中去
+        :param address: str 服务器地址
+        :return bool
+        """
+        global ServerAddressList
+
+        # 如果已存在将直接返回
+        if address in ServerAddressList:
+            return True
+        # 构造写入的数据
+        ServerAddressList.append(address)
+        writeData: dict = {
+            "address_list": ServerAddressList
+        }
+
+        try:
+            with open(self.scanServerAddresssJson, "w+", encoding="utf-8") as wfp:
+                wfp.write(json.dumps(writeData, indent=4))
+            return True
+        except Exception as e:
+            print("写入 scan_server_address.json 时：", e)
+            return False
+
+# 初始化数据
+ServerAddressOperator().readConfigFileList()

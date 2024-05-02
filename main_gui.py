@@ -9,6 +9,7 @@ from info_gui import InfoWindow
 from scanner import ServerScanner
 from threading import Thread, Lock
 from tkinter import font, filedialog
+from tkinter import messagebox as tk_messagebox
 from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
@@ -590,14 +591,20 @@ class InfoProgressBar(ttk.Frame):
             self.update_now(value)
 
     def update_now(self, value: float):
-        if len(self.speed_avg) > 50:
+        speed_avg_len = len(self.speed_avg)
+        if speed_avg_len > 50:
             self.speed_avg.pop(0)
-        elif len(self.speed_avg) == 0:
+            return 
+        elif speed_avg_len == 0:
             self.speed_avg.append(0)
+            return 
 
         percentage = value / self.max_
         self.progress.set_percentage(percentage, f"{round(percentage * 100, 2)}%")
-        self.update_progress_text(sum(self.speed_avg) / len(self.speed_avg))
+        self.update_progress_text(sum(self.speed_avg) / speed_avg_len)
+
+        if (time() - self.last_update) == 0:
+            return
 
         self.speed_avg.append((value - self.last_value) / (time() - self.last_update))
         self.last_value = value
@@ -850,7 +857,7 @@ class ScanBar(ttk.LabelFrame):
 
         # 输入 Frame
         self.input_frame = ttk.Frame(self)
-        self.host_input = TextCombobox(self.input_frame, "域名: ", vars.servers)
+        self.host_input = TextCombobox(self.input_frame, "域名: ", vars.ServerAddressList)
         self.timeout_input = EntryScaleFloat(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
         self.thread_num_input = EntryScaleInt(self.input_frame, 1, 256, 192, "线程数: ")
         self.range_input = RangeSelector(self.input_frame, "端口选择: ", 1024, 65535)
@@ -953,6 +960,17 @@ class ScanBar(ttk.LabelFrame):
         Thread(target=self.scan_obj.run, args=(range(start, stop), self.callback)).start()
         Thread(target=self.check_over_thread, daemon=True).start()
         self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
+
+        # 写入配置文件，使得下一次自动加载
+        self.logger.log(INFO, f"将地址 {host} 写入配置文件。")
+        serverAddressOperatorClass = vars.ServerAddressOperator()
+        writeResult = serverAddressOperatorClass.writeAddressToConfigFile(address=host)
+        if writeResult is False:
+            self.logger.log(ERROR, f"写入地址 {host} 时，文件操作时发生错误！")
+            tk_messagebox.showerror(
+                "文件操作错误",
+                f"对：{serverAddressOperatorClass.scanServerAddresssJson} 文件操作时发生错误！"
+            )
 
     def pause_scan(self):
         def task():
