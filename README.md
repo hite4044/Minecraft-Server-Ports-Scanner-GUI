@@ -43,9 +43,10 @@
 
 > 您可以使用`git clone`等方式克隆本仓库，在本仓库目录下运行`pip install -r requirements.txt`安装所有本项目需要的模块，并运行`main.py`.
 
-- 直接下载可执行文件:
+- 下载压缩包并运行可执行程序:
 
-> 您可以前往 Releases 页面，直接下载本项目的可执行文件，直接点击运行。通常地，Windows 用户请下载`MCSPS-xxx-win-amd64.exe`.
+> 您可以前往 Releases 页面，直接下载本项目的压缩包文件，解压出来后运行`MC服务器扫描器3.0.exe`.
+> Releases 页面的 `xx.exe` 文件仅是一个7-Zip自解压程序
 
 ## 软件预览
 ![beautiful_GUI](https://github.com/hite4044/Minecraft-Server-Ports-Scanner-GUI/assets/129571243/a571046d-78af-4250-b70c-e8a52938f6bd)
