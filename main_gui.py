@@ -476,6 +476,7 @@ class ServerList(ttk.LabelFrame):
                 self.server_map.clear()
                 self.show_serverC = 0
                 self.all_serverC = 0
+                self.servers_info.update_counter(0, 0)
             except Exception as e:
                 print(e.args)
             self.update_info_pos()
