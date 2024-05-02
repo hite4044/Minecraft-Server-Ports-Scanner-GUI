@@ -1,7 +1,14 @@
 from typing import List, Dict
 
 servers: List[str] = ["s2.wemc.cc",  # 220.198.120.151
+                      "dx31.starmc.cn",
+                      "mc48.starmc.cn",
+                      "119.188.245.162",
+                      "m6.ctymc.cn",
+                      "rpg.mc1314.cc",
+                      "mcpvp.asia",
                       "cn-yw-plc-1.openfrp.top",  # 122.242.149.92
+                      'play.simpfun.cn',
                       "ningbo-3689d402.of-7af93c01.shop",
                       "cn-hz-bgp-1.of-7af93c01.shop",
                       "cn-hk-bgp-4.openfrp.top",  # 191.96.240.164
@@ -27,12 +34,7 @@ servers: List[str] = ["s2.wemc.cc",  # 220.198.120.151
                       'mc.remiaft.com',
                       'mc20.rhymc.com',
                       'mc3.rhymc.com',
-                      'mcyc.win',
-                      'mhxj.club',
-                      'play.cloudegg.cloud',
-                      'play.simpfun.cn',
-                      'sa1.mc164.cn',
-                      'server.hpnetwork.top']
+                      'mhxj.club']
 color_map: Dict[str, str] = {
     "0": "black",
     "1": "dark_blue",

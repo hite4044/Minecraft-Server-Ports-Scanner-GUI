@@ -154,8 +154,8 @@ class Tabs(ttk.Notebook):
 class RangeScale(ttk.Canvas):
     def __init__(self, master: Misc):
         """
-        范围选择条\n
-        使用set设置范围, 使用value获取当前值\n
+        范围选择条
+        使用set设置范围, 使用value获取当前值
         绑定<<RangeChanged>>事件侦测范围变化
         """
         super(RangeScale, self).__init__(master, height=15)
