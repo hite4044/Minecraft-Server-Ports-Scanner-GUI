@@ -1,12 +1,20 @@
 from PIL import Image
 from PIL.ImageTk import PhotoImage
-from ttkbootstrap.tooltip import ToolTip
 from pyperclip import copy as copy_clipboard
-from scanner import DescriptionParser
+from ttkbootstrap.tooltip import ToolTip
+from win32con import MB_OK, MB_ICONINFORMATION
+from win32gui import MessageBox
+
+from scanner import DescriptionParser, Port
 from widgets import *
 
 
-class InfoWindow(ttk.Toplevel):
+class Infer:
+    def load_data(self, data: ServerInfo):
+        pass
+
+
+class InfoWindow(ttk.Toplevel, Infer):
     def __init__(self, master: Misc, data: ServerInfo):
         super(InfoWindow, self).__init__(master=master)
         self.favicon_image = None
@@ -19,6 +27,7 @@ class InfoWindow(ttk.Toplevel):
         self.MOTD = MOTD(self)
         self.tab = Tabs(self)
         self.base_info = BaseInfo(self)
+        self.reload_button = ttk.Button(self.base_info, text="重新获取信息", command=self.reget_info)
         self.version_info = VersionInfo(self)
         if self.data.mod_server:
             self.mod_info = ModInfo(self)
@@ -42,6 +51,21 @@ class InfoWindow(ttk.Toplevel):
 
         self.load_icon()
 
+    def reget_info(self):
+        server_status = Port(self.data.host, self.data.port).get_server_info()
+        if server_status["status"] == "offline":
+            MessageBox(self.winfo_id(),
+                       "服务器已经死了，都是你害的辣 (doge",
+                       "服务器已离线",
+                       MB_OK | MB_ICONINFORMATION)
+        elif server_status["status"] == "error":
+            MessageBox(self.winfo_id(),
+                       "服务器有点问题：" + server_status["msg"],
+                       "服务器：?",
+                       MB_OK | MB_ICONINFORMATION)
+        elif server_status["status"] == "online":
+            self.load_data(ServerInfo(server_status["info"]))
+
     def load_icon(self):
         self.iconphoto(False, self.default_favicon)
 
@@ -52,6 +76,7 @@ class InfoWindow(ttk.Toplevel):
 
         self.tab.pack(fill=BOTH, expand=True)
         self.tab.add(self.base_info, text="基本信息")
+        self.reload_button.pack_configure(pady=5)
         self.tab.add(self.version_info, text="版本信息")
         if self.data.mod_server:
             self.tab.add(self.mod_info, text="模组信息")
@@ -63,7 +88,7 @@ class InfoWindow(ttk.Toplevel):
         self.title(text)
 
 
-class PlayersInfo(ttk.Frame):
+class PlayersInfo(ttk.Frame, Infer):
     def __init__(self, master: Misc):
         super(PlayersInfo, self).__init__(master)
 
@@ -78,11 +103,12 @@ class PlayersInfo(ttk.Frame):
         self.data = data
 
         self.text.configure(text=f"人数：{data.player_online}/{data.player_max}")
+        self.player_list.delete(0, END)
         for player in data.players:
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
             self.tip = None
-            self.player_list.bind("<Motion>", self.show_tip, add="+")
+            self.player_list.bind("<Motion>", self.show_tip)
 
     def show_tip(self, event: tk.Event):
         item = self.player_list.nearest(event.y)
@@ -94,7 +120,7 @@ class PlayersInfo(ttk.Frame):
         self.tip = ToolTip(self.player_list, "UUID: " + uuid, delay=0, alpha=0.8)
 
 
-class BaseInfo(ttk.Frame):
+class BaseInfo(ttk.Frame, Infer):
     def __init__(self, master: Misc):
         super(BaseInfo, self).__init__(master)
         self.data = None
@@ -124,7 +150,7 @@ class BaseInfo(ttk.Frame):
         self.host_copy_b.pack()
 
 
-class VersionInfo(ttk.Frame):
+class VersionInfo(ttk.Frame, Infer):
     def __init__(self, master: Misc):
         super(VersionInfo, self).__init__(master)
         self.data = None
@@ -144,7 +170,7 @@ class VersionInfo(ttk.Frame):
         tips = [(self.version_name_text, "服务器版本名 (服务器返回结果)"),
                 (self.version_name_MOTD, "服务器版本名 (服务器返回结果)"),
                 (self.minecraft_version, "服务器版本名 (就是大家平时的叫法)"),
-                (self.protocol_version, "服务器协议版本号 (几乎每个Minecraft版本都有不同版本的协议版本号)"),
+                (self.protocol_version, "服务器协议版本号 (几乎每个MC版本都有不同版本的协议版本号)"),
                 (self.major_name, "大版本 (该服务器是属于哪个大版本的)"),
                 (self.version_type, "服务器版本的类型")]
         for tip in tips:
@@ -182,7 +208,7 @@ class VersionInfo(ttk.Frame):
             self.version_type.configure(text=f"版本类型(未检测)：{data.version_type}")
 
 
-class ModInfo(ttk.Frame):
+class ModInfo(ttk.Frame, Infer):
     def __init__(self, master: Misc):
         super(ModInfo, self).__init__(master)
 
