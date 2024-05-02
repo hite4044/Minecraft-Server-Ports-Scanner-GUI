@@ -10,7 +10,7 @@ default_server_hosts: List[str] = [
     "cn-hk-bgp-4.openfrp.top",  # 141.11.125.121
     "ganzhou-eb7c59a5.of-7af93c01.shop",  # 59.55.0.37
     "ningbo-3689d402.of-7af93c01.shop",  # 110.42.14.112
-    "",
+    "----------------",
     "ipyingshe.com",
     "xiaomy.net",
     "yuming.net",
@@ -134,9 +134,11 @@ class UserAddressOperator:
             with open(self.user_address_json, "r", encoding="utf-8") as rfp:
                 json_data: dict = json.loads(rfp.read())
                 address_list: List[str] = json_data.get('address_list')
-            # 写入新的用户域名
-            with open(self.user_address_json, "w", encoding="utf-8") as rfp:
-                json.dump({"address_list": address_list + [address]}, rfp)
+            if address not in address_list or address not in server_addresses:
+                # 写入新的用户域名
+                with open(self.user_address_json, "w", encoding="utf-8") as rfp:
+                    json.dump({"address_list": address_list + [address]}, rfp, indent=4)
+                server_addresses.append(address)
             return True
         except Exception as e:
             print("写入 user_address_record.json 时：", e)
