@@ -2,6 +2,7 @@ import re
 import pyglet
 from widgets import *
 from win_tool import *
+from sys import stderr
 from ping3 import ping
 from typing import Dict
 from ttkbootstrap import Style
@@ -9,7 +10,6 @@ from info_gui import InfoWindow
 from scanner import ServerScanner
 from threading import Thread, Lock
 from tkinter import font, filedialog
-from tkinter import messagebox as tk_messagebox
 from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
@@ -17,11 +17,23 @@ from comtypes import CoInitialize, CoUninitialize
 from time import perf_counter, sleep, time, strftime, localtime
 from pickle import loads as pickle_loads, dumps as pickle_dumps
 from json import load as json_load, dump as json_dump, JSONDecodeError
-from win32con import MB_ICONWARNING, MB_YESNOCANCEL, IDYES, MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONQUESTION, IDNO, \
-    IDCANCEL
-from sys import stderr
-from win32gui import MessageBox, FindWindow, FindWindowEx, GetParent, EnumChildWindows, GetWindowText, SetWindowText, \
-    GetClassName
+from win32con import (MB_ICONQUESTION,
+                      MB_ICONWARNING,
+                      MB_YESNOCANCEL,
+                      MB_ICONERROR,
+                      MB_YESNO,
+                      IDCANCEL,
+                      MB_OK,
+                      IDYES,
+                      IDNO)
+from win32gui import (EnumChildWindows,
+                      GetWindowText,
+                      SetWindowText,
+                      FindWindowEx,
+                      GetClassName,
+                      FindWindow,
+                      MessageBox,
+                      GetParent)
 
 DEBUG = "debug"
 scanbar: Any = None
@@ -308,7 +320,8 @@ class RecordBar(ttk.Frame):
                 data = json_load(f)
             if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
                 if not isinstance(data, list):
-                    MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误",
+                               MB_OK | MB_ICONERROR)
                     return
                 data = {"servers": data}
 
@@ -594,10 +607,10 @@ class InfoProgressBar(ttk.Frame):
         speed_avg_len = len(self.speed_avg)
         if speed_avg_len > 50:
             self.speed_avg.pop(0)
-            return 
+            return
         elif speed_avg_len == 0:
             self.speed_avg.append(0)
-            return 
+            return
 
         percentage = value / self.max_
         self.progress.set_percentage(percentage, f"{round(percentage * 100, 2)}%")
@@ -845,6 +858,7 @@ class ScanBar(ttk.LabelFrame):
         self.progress_var = 0
         self.callback_workers = 0
         self.taskbar = None
+        self.user_address_operator = vars.UserAddressOperator()
         Thread(target=self.taskbar_create, daemon=True).start()
 
         # 进度条
@@ -857,7 +871,7 @@ class ScanBar(ttk.LabelFrame):
 
         # 输入 Frame
         self.input_frame = ttk.Frame(self)
-        self.host_input = TextCombobox(self.input_frame, "域名: ", vars.ServerAddressList)
+        self.host_input = TextCombobox(self.input_frame, "域名: ", vars.server_addresses)
         self.timeout_input = EntryScaleFloat(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
         self.thread_num_input = EntryScaleInt(self.input_frame, 1, 256, 192, "线程数: ")
         self.range_input = RangeSelector(self.input_frame, "端口选择: ", 1024, 65535)
@@ -962,15 +976,14 @@ class ScanBar(ttk.LabelFrame):
         self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
         # 写入配置文件，使得下一次自动加载
-        self.logger.log(INFO, f"将地址 {host} 写入配置文件。")
-        serverAddressOperatorClass = vars.ServerAddressOperator()
-        writeResult = serverAddressOperatorClass.writeAddressToConfigFile(address=host)
+        self.logger.log(INFO, f"将地址 [{host}] 写入配置文件。")
+        writeResult = self.user_address_operator.writeAddressToConfigFile(address=host)
         if writeResult is False:
-            self.logger.log(ERROR, f"写入地址 {host} 时，文件操作时发生错误！")
-            tk_messagebox.showerror(
-                "文件操作错误",
-                f"对：{serverAddressOperatorClass.scanServerAddresssJson} 文件操作时发生错误！"
-            )
+            self.logger.log(ERROR, f"写入地址 [{host}] 时，文件操作时发生错误！")
+            MessageBox(self.winfo_id(),
+                       f"对：{self.user_address_operator.user_address_json} 文件操作时发生错误！",
+                       "文件操作错误",
+                       MB_OK | MB_ICONERROR)
 
     def pause_scan(self):
         def task():
