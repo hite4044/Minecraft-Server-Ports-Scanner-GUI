@@ -30,6 +30,7 @@ servers: List[str] = ["s2.wemc.cc",  # 220.198.120.151
                       'mcyc.win',
                       'mhxj.club',
                       'play.cloudegg.cloud',
+                      'play.simpfun.cn',
                       'sa1.mc164.cn',
                       'server.hpnetwork.top']
 color_map: Dict[str, str] = {
