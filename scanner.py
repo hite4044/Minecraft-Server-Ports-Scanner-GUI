@@ -190,6 +190,10 @@ class Port:
             return {"status": "error", "msg": "连接被中断", "info": info}
 
         except JSONDecodeError:
+            try:
+                print("JSON Decode Error:", info_data[:100])
+            except (NameError, IndexError):
+                pass
             return {"status": "error", "msg": "JSON解析错误", "info": info}
 
         except UnicodeDecodeError:

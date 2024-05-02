@@ -6,26 +6,15 @@ from typing import List, Dict
 # 默认域名
 default_server_hosts: List[str] = [
     "s2.wemc.cc",
-    "dx31.starmc.cn",
-    "mc48.starmc.cn",
-    "119.188.245.162",
     "m6.ctymc.cn",
-    "rpg.mc1314.cc",
-    "mcpvp.asia",
-    "cn-yw-plc-1.openfrp.top",
-    "play.simpfun.cn",
-    "ningbo-3689d402.of-7af93c01.shop",
-    "cn-hz-bgp-1.of-7af93c01.shop",
-    "cn-hk-bgp-4.openfrp.top",
-    "ganzhou-eb7c59a5.of-7af93c01.shop",
-    "cn-he-plc-2.of-7af93c01.shop",
-    "cn-bj-plc-2.of-7af93c01.shop",
-    "shenzhen-a8bf9282.of-7af93c01.shop",
+    "cn-hk-bgp-4.openfrp.top",  # 141.11.125.121
+    "ganzhou-eb7c59a5.of-7af93c01.shop",  # 59.55.0.37
+    "ningbo-3689d402.of-7af93c01.shop",  # 110.42.14.112
+    "",
     "ipyingshe.com",
     "xiaomy.net",
     "yuming.net",
     "dongtaiyuming.net",
-    "chiyu.red",
     "dx.wdsj.net",
     "hiaxn.cn",
     "kazer.team",
@@ -44,7 +33,9 @@ default_server_hosts: List[str] = [
     "play.cloudegg.cloud",
     "play.simpfun.cn",
     "sa1.mc164.cn",
-    "server.hpnetwork.top"
+    "server.hpnetwork.top",
+    "cn-yw-plc-1.openfrp.top-我想你了",
+    "frp-can.top-想被BanIP的扫它-只能扫一次",  # 61.139.65.143
 ]
 
 # 颜色对照表
