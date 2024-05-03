@@ -1,18 +1,13 @@
 import vars
-import socket
-import varint
+from time import sleep
 from io import BytesIO
-from struct import pack
 from copy import deepcopy
 from typing import List, Any
-from time import time, sleep
 from base64 import b64decode
 from PIL import Image, ImageTk
 from queue import Queue, Empty
+from mcstatus import JavaServer
 from threading import Thread, Lock
-from json import loads as json_loads
-from json.decoder import JSONDecodeError
-from func_timeout import func_set_timeout
 
 
 class ServerScanner:
@@ -142,46 +137,29 @@ class Port:
         self.port = port
         self.protocol = protocol_version
         self.timeout = timeout
-        self.HANDSHAKE_PACKET = self.make_handshaking_packet()
-        self.STATE_PACKET = self.make_state_packet()
-        self.PING_PACKET = self.make_ping_packet()
 
     def get_server_info(self) -> dict:
         """
         获取服务器在`#Status_Response`包中的返回JSON
         https://wiki.vg/Server_List_Ping#Status_Response
         """
-        try:
-            self.sock = socket.socket(family=socket.AF_INET)
-            self.sock.settimeout(self.timeout)
-            self.sock.connect((self.host, self.port))
-        except (TimeoutError, socket.timeout, socket.gaierror):
-            return {"status": "offline"}
+        server = JavaServer(self.host, self.port, self.timeout)
 
         info = {"host": self.host, "port": self.port}
         try:
-            # 获取服务端信息
-            self.send_packet(self.HANDSHAKE_PACKET)
-            self.send_packet(self.STATE_PACKET)
-            info_data = self.receive_packet()
-
-            # 获取服务器延迟
-            ping_timer = time()
-            self.send_packet(self.PING_PACKET)
-            self.check_receive()
-            ping_time = time() - ping_timer
-            self.sock.close()
+            info_data = server.status()
+            ping_time = server.ping()
 
             # 处理JSON字节
-            info["ping"] = round(ping_time * 1000, 2)
-            info["details"] = Port.get_packet_json(info_data)
+            info["ping"] = round(ping_time, 2)
+            info["details"] = info_data.raw
             return {"status": "online", "info": info}
 
         except TimeoutError:
-            return {"status": "error", "msg": "建立连接后连接超时", "info": info}
+            return {"status": "offline"}
 
-        except EOFError:
-            return {"status": "error", "msg": "未接收到足够数据", "info": info}
+        except IOError:
+            return {"status": "error", "msg": "服务器无返回", "info": info}
 
         except (ConnectionRefusedError, ConnectionResetError):
             return {"status": "error", "msg": "连接被重置", "info": info}
@@ -189,113 +167,8 @@ class Port:
         except ConnectionAbortedError:
             return {"status": "error", "msg": "连接被中断", "info": info}
 
-        except JSONDecodeError:
-            try:
-                print("JSON Decode Error:", info_data[:100])
-            except (NameError, IndexError):
-                pass
-            return {"status": "error", "msg": "JSON解析错误", "info": info}
-
         except UnicodeDecodeError:
             return {"status": "error", "msg": "UTF-8解码错误", "info": info}
-
-    def send_packet(self, packet_data: bytes) -> None:
-        """给一个socket对象发点什么"""
-        self.sock.sendall(packet_data)
-
-    @func_set_timeout(3)
-    def receive_packet(self) -> bytes:
-        """
-        接收一个遵循`Minecraft协议`的数据包
-        https://wiki.vg/Protocol:zh-cn#.E6.97.A0.E5.8E.8B.E7.BC.A9
-        :return:
-        """
-        head_data = self.sock.recv(8)
-        if len(head_data) != 8:
-            raise EOFError
-        head_data = BytesIO(head_data)
-        length = varint.decode_stream(head_data)
-
-        packet_data = head_data.read()
-        while len(packet_data) < length:
-            more = self.sock.recv(length - len(packet_data))
-            if not more:
-                raise EOFError
-            packet_data += more
-        return packet_data
-
-    def check_receive(self) -> None:
-        """只是检查一下服务器有没有返回数据"""
-        self.sock.recv(1)
-
-    def make_handshaking_packet(self) -> bytes:
-        """
-        制作一个符合`Minecraft协议`的握手包
-        https://wiki.vg/Server_List_Ping#Handshake
-
-        协议版本  	VarInt	        MC的协议版本 (推荐 47)
-        服务器地址	String	        域名或是IP, 例如： localhost 或是 127.0.0.1
-        服务器端口	Unsigned Short	默认值为25565
-        下一阶段 	VarInt	        0x01为状态, 0x02为登录
-        """
-        return Port.make_packet(0x00,
-                                varint.encode(self.protocol),
-                                pack(">p", self.host.encode("utf-8")),
-                                pack(">H", self.port),
-                                varint.encode(0x01))
-
-    @staticmethod
-    def get_packet_json(data: bytes) -> dict:
-        """
-        将一个遵循`Minecraft协议`的数据包分离出JSON数据
-        https://wiki.vg/Protocol:zh-cn#.E6.97.A0.E5.8E.8B.E7.BC.A9
-
-        :return:
-        """
-
-        try:
-            data = data[data.index(b'{"'):]
-        except (ValueError, IndexError):
-            raise JSONDecodeError("没有找到JSON数据", "", 0)
-        data = data.decode("utf-8")
-        return json_loads(data)
-
-    @staticmethod
-    def make_ping_packet() -> bytes:
-        """
-        制作一个符合`Minecraft协议`的ping包
-        https://wiki.vg/Server_List_Ping#Ping_Request
-        :return: bytes
-        """
-        return Port.make_packet(0x01, pack(">q", int(time() * 1000)))
-
-    @staticmethod
-    def make_state_packet() -> bytes:
-        """
-        制作一个符合`Minecraft协议`的请求状态包
-        https://wiki.vg/Server_List_Ping#Status_Request
-        :return: bytes
-        """
-        return Port.make_packet(0x00)
-
-    @staticmethod
-    def make_packet(packet_id: int, *datas: bytes) -> bytes:
-        """
-        制作一个符合Minecraft协议的数据包
-        https://wiki.vg/Protocol:zh-cn#.E6.97.A0.E5.8E.8B.E7.BC.A9
-
-        名称   类型           注释
-        长度   VarInt        数据长度+包编号长度
-        包序号 VarInt        一般从0x00到0xFF
-        数据   Bytes Array
-        :return: bytes
-        """
-        id_varint = varint.encode(packet_id)
-        if len(datas) != 0:
-            data = b"".join(map(bytes, datas))
-        else:
-            data = b""
-        return varint.encode(len(id_varint + data)) + id_varint + data
 
 
 class ServerInfo:
