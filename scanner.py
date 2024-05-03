@@ -28,25 +28,27 @@ class ServerScanner:
         self.working_worker: int = 0  # 工作中的线程数
         self.thread_num_lock = Lock()
 
-    def config(self, host: str, timeout: float = 0.7, thread_num: int = 256):
+    def config(self, timeout: float = 0.7, thread_num: int = 256, callback: object = lambda x: None):
         self.thread_num = thread_num
         self.timeout = timeout
-        self.host = host
+        self.callback = callback
 
-    def run(self, port_range: range, callback: object):
+    def run(self, host: str, port_range: range):
         while not self.work_queue.empty():
             try:
                 self.work_queue.get(block=False)
             except Empty:
                 break
         self.in_scan = True
-        self.callback = callback
-        for port in port_range:
-            self.work_queue.put(port)
+        self.add_task(host, port_range)
 
         for thread_id in range(self.thread_num):
             Thread(target=self.scan_worker, daemon=True, name=f"Worker-{thread_id}").start()
             sleep(self.timeout / self.thread_num)
+
+    def add_task(self, host: str, port_range: range):
+        for port in port_range:
+            self.work_queue.put((host, port))
 
     def join(self):
         while self.worker_count > 0:
@@ -81,8 +83,8 @@ class ServerScanner:
         while self.worker_count > 0:
             sleep(0.1)
 
-    def scan_a_port(self, port: int, callback: Any):
-        raw_info = Port(self.host, port, self.timeout).get_server_info()
+    def scan_a_port(self, host: str, port: int, callback: Any):
+        raw_info = Port(host, port, self.timeout).get_server_info()
         if raw_info["status"] == "online":
             Thread(target=callback, args=(ServerInfo(raw_info["info"]),)).start()
             return
@@ -101,8 +103,8 @@ class ServerScanner:
             self.working_worker += 1
         while self.in_scan:
             try:
-                port = self.work_queue.get(block=False)
-                self.scan_a_port(port, self.callback)
+                host, port = self.work_queue.get(block=False)
+                self.scan_a_port(host, port, self.callback)
             except Empty:
                 break
 

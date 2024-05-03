@@ -1,5 +1,7 @@
 import re
 import pyglet
+import ttkbootstrap
+
 from widgets import *
 from win_tool import *
 from sys import stderr
@@ -110,7 +112,7 @@ class GUI(ttk.Window):
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
         self.wm_geometry("754x730")
-        self.wm_resizable(False, False)
+        self.wm_resizable(False, True)
         Thread(target=self.wm_iconbitmap, args=("assets/icon.ico",)).start()
         Thread(target=self.place_window_center).start()
 
@@ -954,15 +956,14 @@ class ScanBar(ttk.LabelFrame):
                 if info["status"] != "offline":
                     self.logger.log(info["status"], f"[{info['info']['port']}]:", info["msg"])
 
-    def start_scan(self, start: int = None, stop: int = None):  # 20500 - 25000
+    def start_scan(self):  # 20500 - 25000
         if self.in_scan:
             return
 
         host = self.host_input.get()
         thread_num = self.thread_num_input.get_value()
         timeout = self.timeout_input.get_value()
-        if not (start and stop):
-            start, stop = self.range_input.get()
+        start, stop = self.range_input.get()
 
         if not self.check_host(host):
             return
@@ -974,8 +975,8 @@ class ScanBar(ttk.LabelFrame):
 
         self.progress_var = 0
         self.progress_bar.reset(stop - start)
-        self.scan_obj.config(host, timeout, thread_num)
-        Thread(target=self.scan_obj.run, args=(range(start, stop), self.callback)).start()
+        self.scan_obj.config(timeout, thread_num, self.callback)
+        Thread(target=self.scan_obj.run, args=(host, range(start, stop))).start()
         Thread(target=self.check_over_thread, daemon=True).start()
         self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
@@ -1050,7 +1051,8 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=DISABLED)
             self.start_button.configure(state=NORMAL)
             self.progress_stop()
-            FlashWindowCount(FindWindow("TkTopLevel", "MC服务器扫描器"))
+            FlashWindowCount(self.taskbar.hwnd, 1)
+            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
 
     def progress_stop(self):
         self.progress_bar.update_now(self.progress_var)
