@@ -113,7 +113,9 @@ class PlayersInfo(ttk.Frame, Infer):
         for player in data.players:
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
-            self.player_list.bind("<Enter>", self.enter, "+")
+            self.player_list.unbind_all("<Enter>")
+            self.player_list.bind("<Enter>", self.enter)
+            self.player_list.bind("<Enter>", self.tip.enter, "+")
         else:
             self.tip.hide_tip()
 
@@ -125,7 +127,7 @@ class PlayersInfo(ttk.Frame, Infer):
             return
         print("Build ToolTip")
         self.tip.show_tip()
-        uuid = [player for player in self.data.players if player["name"] == self.player_list.get(item)][0]['id']
+        uuid = self.data.players[item]['id']
         self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + uuid)
         self.now_item = item
         self.leave_id = self.player_list.bind("<Leave>", self.leave, "+")

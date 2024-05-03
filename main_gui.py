@@ -230,7 +230,10 @@ class Logger(ttk.Frame):
         self.log_count_label.pack(side=RIGHT, padx=5, pady=5)
 
         # 日志显示列表
-        self.list_box = ttk.Treeview(self, columns=["0", "1", "2"], show=HEADINGS)
+        self.list_box_bar = ttk.Scrollbar(self)
+        self.list_box_bar.pack(side=RIGHT, fill=Y)
+        self.list_box = ttk.Treeview(self, columns=["0", "1", "2"], show=HEADINGS, yscrollcommand=self.list_box_bar.set)
+        self.list_box_bar.configure(command=self.list_box.yview)
         self.list_box.column("0", width=80, anchor=CENTER)
         self.list_box.column("1", width=21, anchor=CENTER)
         self.list_box.column("2", width=440)

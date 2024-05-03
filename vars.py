@@ -7,6 +7,9 @@ from typing import List, Dict
 default_server_hosts: List[str] = [
     "s2.wemc.cc",
     "m6.ctymc.cn",
+    "mc20.rhymc.com",
+    "s8.singsi.cn",
+    "mc13.ytonidc.com",
     "cn-hk-bgp-4.openfrp.top",  # 141.11.125.121
     "ganzhou-eb7c59a5.of-7af93c01.shop",  # 59.55.0.37
     "ningbo-3689d402.of-7af93c01.shop",  # 110.42.14.112

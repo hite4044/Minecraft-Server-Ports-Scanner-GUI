@@ -1,3 +1,6 @@
+from mcstatus.pinger import ServerPinger
+from mcstatus.protocol.connection import TCPSocketConnection
+
 import vars
 from time import sleep
 from io import BytesIO
@@ -147,8 +150,11 @@ class Port:
 
         info = {"host": self.host, "port": self.port}
         try:
-            info_data = server.status()
-            ping_time = server.ping()
+            with TCPSocketConnection(server.address, server.timeout) as connection:
+                pinger = ServerPinger(connection, address=server.address)
+                pinger.handshake()
+                info_data = pinger.read_status()
+                ping_time = pinger.test_ping()
 
             # 处理JSON字节
             info["ping"] = round(ping_time, 2)
@@ -159,7 +165,7 @@ class Port:
             return {"status": "offline"}
 
         except IOError:
-            return {"status": "error", "msg": "服务器无返回", "info": info}
+            return {"status": "offline"}
 
         except (ConnectionRefusedError, ConnectionResetError):
             return {"status": "error", "msg": "连接被重置", "info": info}
