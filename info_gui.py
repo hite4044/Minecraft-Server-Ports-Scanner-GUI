@@ -1,3 +1,5 @@
+import tkinter
+
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 from pyperclip import copy as copy_clipboard
@@ -27,8 +29,9 @@ class InfoWindow(ttk.Toplevel, Infer):
         self.MOTD = MOTD(self)
         self.tab = Tabs(self)
         self.base_info = BaseInfo(self)
-        self.reload_button = ttk.Button(self.base_info, text="重新获取信息", command=self.reget_info)
+        self.reload_button = ttk.Button(self.base_info, text="重新获取信息", command=self.reget_info, style="success")
         self.version_info = VersionInfo(self)
+
         if self.data.mod_server:
             self.mod_info = ModInfo(self)
 
@@ -92,12 +95,15 @@ class PlayersInfo(ttk.Frame, Infer):
     def __init__(self, master: Misc):
         super(PlayersInfo, self).__init__(master)
 
-        self.tip = None
+        self.leave_id = None
+        self.motion_id = None
         self.text = ttk.Label(self, anchor=CENTER)
         self.player_list = tk.Listbox(self, width=15)
+        self.tip = ToolTip(self.player_list, "UUID: 114514", delay=0, alpha=0.8)
         self.text.pack(side=TOP, fill=X)
         self.player_list.pack(side=LEFT, fill=BOTH, expand=True)
         self.data = None
+        self.now_item = None
 
     def load_data(self, data: ServerInfo):
         self.data = data
@@ -107,17 +113,40 @@ class PlayersInfo(ttk.Frame, Infer):
         for player in data.players:
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
-            self.tip = None
-            self.player_list.bind("<Motion>", self.show_tip)
+            self.player_list.bind("<Enter>", self.enter, "+")
+        else:
+            self.tip.hide_tip()
 
-    def show_tip(self, event: tk.Event):
+        self.now_item = None
+
+    def enter(self, event: tk.Event):
         item = self.player_list.nearest(event.y)
         if item == -1:
             return
+        print("Build ToolTip")
+        self.tip.show_tip()
         uuid = [player for player in self.data.players if player["name"] == self.player_list.get(item)][0]['id']
-        if self.tip is not None and self.tip.toplevel is not None:
-            self.tip.toplevel.destroy()
-        self.tip = ToolTip(self.player_list, "UUID: " + uuid, delay=0, alpha=0.8)
+        self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + uuid)
+        self.now_item = item
+        self.leave_id = self.player_list.bind("<Leave>", self.leave, "+")
+        self.motion_id = self.player_list.bind("<Motion>", self.update_tip, "+")
+
+    def leave(self, _):
+        print("Hide ToolTip")
+        #self.tip.hide_tip()
+        self.player_list.unbind("<Motion>", self.motion_id)
+        self.player_list.bind("<Motion>", self.tip.move_tip)
+        self.player_list.unbind("<Leave>", self.leave_id)
+        self.player_list.bind("<Leave>", self.tip.leave)
+
+    def update_tip(self, event: tk.Event):
+        if self.tip.toplevel is not None:
+            item = self.player_list.nearest(event.y)
+            if item == -1 or item == self.now_item:
+                return
+            print("Update ToolTip")
+            self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.data.players[item]['id'])
+            self.now_item = item
 
 
 class BaseInfo(ttk.Frame, Infer):
