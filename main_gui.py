@@ -6,6 +6,7 @@ from win_tool import *
 from sys import stderr
 from ping3 import ping
 from typing import Dict
+from os.path import exists
 from ttkbootstrap import Style
 from info_gui import InfoWindow
 from scanner import ServerScanner
@@ -50,7 +51,10 @@ def set_default_font():
 
 def load_unifont():
     pyglet.options['win32_gdi_font'] = True
-    pyglet.font.add_file("assets/Unifont.otf")
+    try:
+        pyglet.font.add_file("assets/Unifont.otf")
+    except FileNotFoundError:
+        print("Unifont字体文件丢失", file=stderr)
 
 
 def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
@@ -110,8 +114,14 @@ class GUI(ttk.Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
-        Thread(target=self.wm_iconbitmap, args=("assets/icon.ico",)).start()
+        Thread(target=self.set_icon).start()
         Thread(target=self.place_window_center).start()
+
+    def set_icon(self):
+        if exists("assets/icon.ico"):
+            self.wm_iconbitmap("assets/icon.ico")
+        else:
+            print("图标文件丢失", file=stderr)
 
     def pack_widgets(self):
         self.title_bar.pack(fill=X, padx=10)

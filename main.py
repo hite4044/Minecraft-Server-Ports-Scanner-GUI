@@ -1,4 +1,8 @@
 # -*- coding: UTF-8 -*-
+import os
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 from main_gui import GUI
 
 
