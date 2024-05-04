@@ -11,12 +11,15 @@ from threading import Thread, Lock
 
 
 def import_big_library():
-    from mcstatus.address import Address
-    from mcstatus.pinger import ServerPinger
-    from mcstatus.protocol.connection import TCPSocketConnection
-    globals()["Address"] = Address
-    globals()["ServerPinger"] = ServerPinger
-    globals()["TCPSocketConnection"] = TCPSocketConnection
+    try:
+        from mcstatus.address import Address
+        from mcstatus.pinger import ServerPinger
+        from mcstatus.protocol.connection import TCPSocketConnection
+        globals()["Address"] = Address
+        globals()["ServerPinger"] = ServerPinger
+        globals()["TCPSocketConnection"] = TCPSocketConnection
+    except ImportError:
+        print("无法多线程导入mcstatus库", file=stderr)
 
 
 Thread(target=import_big_library).start()
