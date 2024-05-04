@@ -111,8 +111,6 @@ class GUI(ttk.Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
-        self.wm_geometry("754x730")
-        self.wm_resizable(False, True)
         Thread(target=self.wm_iconbitmap, args=("assets/icon.ico",)).start()
         Thread(target=self.place_window_center).start()
 
