@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 

@@ -1,5 +1,4 @@
-import tkinter
-
+# -*- coding: UTF-8 -*-
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 from pyperclip import copy as copy_clipboard

@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from main_gui import GUI
 
 

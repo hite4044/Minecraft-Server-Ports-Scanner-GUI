@@ -1,6 +1,4 @@
-from mcstatus.pinger import ServerPinger
-from mcstatus.protocol.connection import TCPSocketConnection
-
+# -*- coding: UTF-8 -*-
 import vars
 from time import sleep
 from io import BytesIO
@@ -11,6 +9,8 @@ from PIL import Image, ImageTk
 from queue import Queue, Empty
 from mcstatus import JavaServer
 from threading import Thread, Lock
+from mcstatus.pinger import ServerPinger
+from mcstatus.protocol.connection import TCPSocketConnection
 
 
 class ServerScanner:

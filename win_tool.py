@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from enum import Enum
 import comtypes.client as cc
 from win32gui import FlashWindowEx

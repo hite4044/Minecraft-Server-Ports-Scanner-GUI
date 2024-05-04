@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from os.path import join as path_join, isfile
 from os import getcwd
 import json

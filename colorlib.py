@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 class Color:
     def __init__(self, *rgb):
         if len(rgb) == 1:

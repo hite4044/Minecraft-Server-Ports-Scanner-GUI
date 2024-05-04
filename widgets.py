@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from ttkbootstrap.constants import *
 from tkinter.font import Font
 from ttkbootstrap import Style

@@ -1,7 +1,6 @@
+# -*- coding: UTF-8 -*-
 import re
 import pyglet
-import ttkbootstrap
-
 from widgets import *
 from win_tool import *
 from sys import stderr
