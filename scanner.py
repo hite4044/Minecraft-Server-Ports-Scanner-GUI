@@ -7,10 +7,19 @@ from typing import List, Any
 from base64 import b64decode
 from PIL import Image, ImageTk
 from queue import Queue, Empty
-from mcstatus import JavaServer
 from threading import Thread, Lock
-from mcstatus.pinger import ServerPinger
-from mcstatus.protocol.connection import TCPSocketConnection
+
+
+def import_big_library():
+    from mcstatus.address import Address
+    from mcstatus.pinger import ServerPinger
+    from mcstatus.protocol.connection import TCPSocketConnection
+    globals()["Address"] = Address
+    globals()["ServerPinger"] = ServerPinger
+    globals()["TCPSocketConnection"] = TCPSocketConnection
+
+
+Thread(target=import_big_library).start()
 
 
 class ServerScanner:
@@ -148,12 +157,10 @@ class Port:
         获取服务器在`#Status_Response`包中的返回JSON
         https://wiki.vg/Server_List_Ping#Status_Response
         """
-        server = JavaServer(self.host, self.port, self.timeout)
-
         info = {"host": self.host, "port": self.port}
         try:
-            with TCPSocketConnection(server.address, server.timeout) as connection:
-                pinger = ServerPinger(connection, address=server.address)
+            with TCPSocketConnection((self.host, self.port), self.timeout) as connection:
+                pinger = ServerPinger(connection, address=Address(self.host, self.port))
                 pinger.handshake()
                 info_data = pinger.read_status()
                 ping_time = pinger.test_ping()
