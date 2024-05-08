@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
+from PIL import ImageDraw, ImageTk, Image
 from ttkbootstrap.constants import *
 from tkinter.font import Font
 from ttkbootstrap import Style
 from scanner import ServerInfo
+from vars import scale_rater
 from typing import Any, List
 from random import randint
 import ttkbootstrap as ttk
@@ -170,7 +172,7 @@ class RangeScale(ttk.Canvas):
         使用set设置范围, 使用value获取当前值
         绑定<<RangeChanged>>事件侦测范围变化
         """
-        super(RangeScale, self).__init__(master, height=15)
+        super(RangeScale, self).__init__(master, height=int(scale_rater() * 15))
         self.bind("<Button-1>", self.mouse_down)
         self.bind("<ButtonRelease-1>", self.mouse_up)
         self.bind("<Configure>", self.redraw)
@@ -181,10 +183,10 @@ class RangeScale(ttk.Canvas):
         self.min_percentage: float = 0.25
         self.max_percentage: float = 0.75
 
-        self.scale_bar = None
-        self.range_bar = None
-        self.min_handle = None
-        self.max_handle = None
+        self.image = None
+        self.image_tk = None
+
+        self.bar_width = 5
 
         self.min_highlight = False  # min滑块是否高亮
         self.max_highlight = False  # max滑块是否高亮
@@ -221,23 +223,29 @@ class RangeScale(ttk.Canvas):
         self.redraw()
 
     def redraw(self, *_):
+        height = self.winfo_height()
+        width = self.winfo_width()
+
+        source = Image.new("RGB", (self.winfo_width() * 10, height * 10), Style().colors.bg)
+
+        draw = ImageDraw.Draw(source)
+        draw.line((0, height / 2 * 10, self.winfo_width() * 10, height // 2 * 10),
+                  fill=self.bar_color,
+                  width=self.bar_width * 10)  # 绘制范围基条
+        draw.line((int(self.min_offset) * 10, 70, int(self.max_offset) * 10, height // 2 * 10),
+                  fill=self.range_color,
+                  width=self.bar_width * 10)  # 绘制范围条
+        draw.ellipse((int(self.min_offset) * 10, 0, (int(self.min_offset) + height) * 10, height * 10),
+                     fill=self.min_handle_color,
+                     width=0)  # 绘制小端滑块
+        draw.ellipse((int(self.max_offset) * 10, 0, (int(self.max_offset) + height) * 10, height * 10),
+                     fill=self.max_handle_color,
+                     width=0)  # 绘制大端滑块
+
+        source = source.resize((width, height))
+        self.image = ImageTk.PhotoImage(source)
         self.delete(ALL)
-        self.scale_bar = self.create_rectangle(1, 4, self.winfo_width(), 10, fill=self.bar_color, width=0)
-        self.range_bar = self.create_rectangle(self.min_offset, 4, self.max_offset, 10,
-                                               fill=self.range_color, width=0)
-
-        self.redraw_min_handle()
-        self.redraw_max_handle()
-
-    def redraw_min_handle(self):
-        self.min_handle = self.create_text(7 + self.min_offset, 5,
-                                           text="●", font=("微软雅黑", 23),
-                                           fill=self.min_handle_color)
-
-    def redraw_max_handle(self):
-        self.max_handle = self.create_text(7 + self.max_offset, 5,
-                                           text="●", font=("微软雅黑", 23),
-                                           fill=self.max_handle_color)
+        self.create_image(0, 0, anchor=NW, image=self.image)
 
     def mouse_move(self, event: tk.Event):
         min_box = (self.min_offset, 0, self.min_offset + 15, 15)
@@ -276,29 +284,24 @@ class RangeScale(ttk.Canvas):
     def update_color(self):
         if self.min_highlight:
             self.min_handle_color = Color(self.min_handle_base_color).set_brightness(1.1).hex
-            self.redraw_min_handle()
         else:
             self.min_handle_color = copy(self.min_handle_base_color)
-            self.redraw_min_handle()
 
         if self.max_highlight:
             self.max_handle_color = Color(self.max_handle_base_color).set_brightness(1.1).hex
-            self.redraw_max_handle()
         else:
             self.max_handle_color = copy(self.max_handle_base_color)
-            self.redraw_max_handle()
+        self.redraw()
 
     def mouse_down(self, *_):
         if self.max_highlight:
             self.bind_max_handle = True
-            return
-        if self.min_highlight:
+        elif self.min_highlight:
             self.bind_min_handle = True
 
     def mouse_up(self, *_):
         if self.bind_min_handle:
             self.bind_min_handle = False
-            return
         elif self.bind_max_handle:
             self.bind_max_handle = False
 
@@ -308,11 +311,11 @@ class RangeScale(ttk.Canvas):
 
     @property
     def min_offset(self) -> float:
-        return (self.winfo_width() - 15) * self.min_percentage
+        return (self.winfo_width() - self.winfo_height()) * self.min_percentage
 
     @property
     def max_offset(self) -> float:
-        return (self.winfo_width() - 15) * self.max_percentage
+        return (self.winfo_width() - self.winfo_height()) * self.max_percentage
 
 
 class TipEntry(ttk.Entry):

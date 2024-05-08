@@ -1,8 +1,12 @@
 # -*- coding: UTF-8 -*-
-from os.path import join as path_join, isfile, exists
-from os import getcwd, mkdir
 import json
-from typing import List, Dict
+from os import mkdir
+from typing import List, Dict, Any
+from win32print import GetDeviceCaps
+from win32api import GetSystemMetrics
+from win32gui import GetDC, ReleaseDC
+from win32con import SM_CXSCREEN, DESKTOPHORZRES
+from os.path import join as path_join, isfile, exists
 
 # 默认域名
 default_server_hosts: List[str] = [
@@ -154,5 +158,29 @@ class UserAddressOperator:
             return False
 
 
+class ScaleRater:
+    def __init__(self):
+        self.scale_rate: float = 1.0
+        self.callbacks: List[Any] = []
+        self.update_scale_rate()
+
+    def update_scale_rate(self):
+        hdc = GetDC(0)
+        real_width = GetDeviceCaps(hdc, DESKTOPHORZRES)
+        ReleaseDC(0, hdc)
+        fake_width = GetSystemMetrics(SM_CXSCREEN)
+        print(real_width, fake_width)
+        new_scale_rate = round(real_width / fake_width, 2)
+        if new_scale_rate != self.scale_rate:
+            self.scale_rate = new_scale_rate
+            for callback in self.callbacks:
+                callback(self.scale_rate)
+
+    def __call__(self) -> float:
+        return self.scale_rate
+
+
 # 初始化数据
 UserAddressOperator().readConfigFileList()
+
+scale_rater = ScaleRater()
