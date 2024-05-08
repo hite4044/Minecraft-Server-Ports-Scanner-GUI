@@ -159,9 +159,13 @@ class UserAddressOperator:
 
 
 class ScaleRater:
+    """
+    获取屏幕缩放比例的类
+    因为窗口创建后计算值不在准确
+    所以仅在窗口创建前获取一次值
+    """
     def __init__(self):
         self.scale_rate: float = 1.0
-        self.callbacks: List[Any] = []
         self.update_scale_rate()
 
     def update_scale_rate(self):
@@ -169,12 +173,9 @@ class ScaleRater:
         real_width = GetDeviceCaps(hdc, DESKTOPHORZRES)
         ReleaseDC(0, hdc)
         fake_width = GetSystemMetrics(SM_CXSCREEN)
-        print(real_width, fake_width)
         new_scale_rate = round(real_width / fake_width, 2)
         if new_scale_rate != self.scale_rate:
             self.scale_rate = new_scale_rate
-            for callback in self.callbacks:
-                callback(self.scale_rate)
 
     def __call__(self) -> float:
         return self.scale_rate

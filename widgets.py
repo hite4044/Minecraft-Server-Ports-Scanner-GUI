@@ -11,6 +11,7 @@ import ttkbootstrap as ttk
 from colorlib import Color
 from tkinter import Misc
 from copy import copy
+from math import ceil
 import tkinter as tk
 import vars
 
@@ -186,7 +187,7 @@ class RangeScale(ttk.Canvas):
         self.image = None
         self.image_tk = None
 
-        self.bar_width = 5
+        self.bar_width = ceil(5 * scale_rater())
 
         self.min_highlight = False  # min滑块是否高亮
         self.max_highlight = False  # max滑块是否高亮
@@ -226,24 +227,27 @@ class RangeScale(ttk.Canvas):
         height = self.winfo_height()
         width = self.winfo_width()
 
-        source = Image.new("RGB", (self.winfo_width() * 10, height * 10), Style().colors.bg)
+        source = Image.new("RGBA", (self.winfo_width(), height), Style().colors.bg)
+        source2 = Image.new("RGBA", (self.winfo_width() * 10, height * 10), "#FFFF0000")
 
         draw = ImageDraw.Draw(source)
-        draw.line((0, height / 2 * 10, self.winfo_width() * 10, height // 2 * 10),
+        draw2 = ImageDraw.Draw(source2)
+        draw.line((0, height // 2, self.winfo_width(), height // 2),
                   fill=self.bar_color,
-                  width=self.bar_width * 10)  # 绘制范围基条
-        draw.line((int(self.min_offset) * 10, 70, int(self.max_offset) * 10, height // 2 * 10),
+                  width=self.bar_width)  # 绘制范围基条
+        draw.line((int(self.min_offset), height // 2, int(self.max_offset), height // 2),
                   fill=self.range_color,
-                  width=self.bar_width * 10)  # 绘制范围条
-        draw.ellipse((int(self.min_offset) * 10, 0, (int(self.min_offset) + height) * 10, height * 10),
-                     fill=self.min_handle_color,
-                     width=0)  # 绘制小端滑块
-        draw.ellipse((int(self.max_offset) * 10, 0, (int(self.max_offset) + height) * 10, height * 10),
-                     fill=self.max_handle_color,
-                     width=0)  # 绘制大端滑块
+                  width=self.bar_width)  # 绘制范围条
+        draw2.ellipse((int(self.min_offset) * 10, 0, (int(self.min_offset) + height) * 10, height * 10),
+                      fill=self.min_handle_color,
+                      width=0)  # 绘制小端滑块
+        draw2.ellipse((int(self.max_offset) * 10, 0, (int(self.max_offset) + height) * 10, height * 10),
+                      fill=self.max_handle_color,
+                      width=0)  # 绘制大端滑块
 
-        source = source.resize((width, height))
-        self.image = ImageTk.PhotoImage(source)
+        source2 = source2.resize((width, height))
+        source3 = Image.alpha_composite(source, source2)
+        self.image = ImageTk.PhotoImage(source3)
         self.delete(ALL)
         self.create_image(0, 0, anchor=NW, image=self.image)
 
