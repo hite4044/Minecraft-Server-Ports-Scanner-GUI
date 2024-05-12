@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 import re
+from queue import Queue
+
 import pyglet
 from widgets import *
 from win_tool import *
@@ -219,6 +221,7 @@ class Logger(ttk.Frame):
         self.log_count = 0
         self.now_level = INFO
         self.log_lock = Lock()
+        self.log_queue = Queue()
 
         # 信息条
         self.info_bar = ttk.Frame(self)
@@ -257,14 +260,29 @@ class Logger(ttk.Frame):
         self.log_count_label.configure(text=f"日志数量: {self.log_count}")
 
     def log(self, level: str, *values: object, sep: str = " "):
-        with self.log_lock:
-            now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
-            log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
-            self.logs.append(log)
-            if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
-                self.insert_a_log(log)
-            self.log_count += 1
-            self.set_log_count()
+        try:
+            self.log_lock.acquire(timeout=0.4)
+        except TimeoutError:
+            Thread(target=self.log_task, args=(level, values, sep))
+            return
+
+        now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
+        log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
+        self.logs.append(log)
+        if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
+            self.insert_a_log(log)
+        self.log_count += 1
+        self.set_log_count()
+
+        y_view = self.list_box.yview()
+        if y_view[1] == 1.0 or (all(i == 0.0 for i in y_view)):
+            self.list_box.yview_moveto(1.0)
+        if self.log_lock.locked():
+            self.log_lock.release()
+
+    def log_task(self, level: str, *values: object, sep: str = " "):
+        sleep(0.1)
+        self.log(level, *values, sep=sep)
 
     def on_level_change(self, _):
         self.now_level = self.levels[self.select_combobox.get()]
@@ -403,8 +421,8 @@ class ServerList(ttk.LabelFrame):
         self.sep = ttk.Separator(self, orient=HORIZONTAL)  # 分割线
         self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
         self.empty_tip = ttk.Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
-        self.servers_info = ServerInfoFrame(self)  # 服务器数量信息
-        self.record_bar = RecordBar(self, self)
+        self.record_bar = RecordBar(self, self)  # 保存加载功能
+        self.servers_info = ServerInfoFrame(self.record_bar)  # 服务器数量信息
 
         self.pack_weights()  # 放置组件
 
@@ -413,6 +431,7 @@ class ServerList(ttk.LabelFrame):
         self.sep.pack(fill=X, padx=3, pady=3)
         self.servers_frame.pack(fill=BOTH, expand=True)
         self.record_bar.pack_configure(side=BOTTOM, fill=X)
+        self.servers_info.pack_configure(side=RIGHT, padx=5)
         self.update_info_pos()
 
     def add_server(self, info: ServerInfo, _filter: ServersFilter = None):
@@ -470,7 +489,6 @@ class ServerList(ttk.LabelFrame):
             self.empty_tip.place_forget()
         else:
             self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
-            self.servers_info.place(relx=0.98, rely=0.9, anchor=SE)
 
     def on_delete_server(self, event: tk.Event):
         server_frame: ServerFrame = event.widget
@@ -649,38 +667,39 @@ class ProgressBar(ttk.Canvas):
         self.bind("<<ThemeChanged>>", self.change_color)
         self.percentage = 0
         self.text = text
+        self.redraw_lock = Lock()
         self.now_elements = []
         self.last_elements = []
 
-        self.text_id = self.create_text(self.winfo_width() // 2, 13, text=self.text, fill=self.color.fg)
-        self.last_elements.append(self.text_id)
+        self.text_id = 0
+        self.redraw()
 
     def change_color(self, *_):
         self.color = Style().colors
         self.redraw()
 
     def redraw(self, *_):
-        self.now_elements.clear()
-        width = self.winfo_width()
-        bar_x = int((width - 4) * self.percentage)
-        if bar_x == 1:
-            self.now_elements.append(self.create_line(1, 1, 1, 26, fill=self.color.success))
-        elif bar_x > 1:
-            self.now_elements.append(self.create_rectangle(1, 1, bar_x, 26 - 2, fill=self.color.success,
-                                                           outline=self.color.success))
+        with self.redraw_lock:
+            self.now_elements.clear()
+            width = self.winfo_width()
+            bar_x = int((width - 4) * self.percentage)
+            if bar_x == 1:
+                self.now_elements.append(self.create_line(1, 1, 1, 26, fill=self.color.success))
+            elif bar_x > 1:
+                self.now_elements.append(self.create_rectangle(1, 1, bar_x, 26 - 2, fill=self.color.success,
+                                                               outline=self.color.success))
 
-        self.now_elements.append(self.create_rectangle(0, 0, width - 1, 26 - 1, outline=self.color.border))
-        self.text_id = self.create_text(width // 2, 13, text=self.text, fill=self.color.fg)
-        self.now_elements.append(self.text_id)
+            self.now_elements.append(self.create_rectangle(0, 0, width - 1, 26 - 1, outline=self.color.border))
+            self.text_id = self.create_text(width // 2, 13, text=self.text, fill=self.color.fg)
+            self.now_elements.append(self.text_id)
 
-        if self.last_elements:
-            self.delete(*self.last_elements)
-        self.last_elements = self.now_elements.copy()
+            if self.last_elements:
+                self.delete(*self.last_elements)
+            self.last_elements = self.now_elements.copy()
 
     def set_percentage(self, percentage: float, text: str = None):
         self.percentage = percentage
         self.text = text if text is not None else self.text
-        self.itemconfig(self.text_id, text=self.text)
         self.redraw()
 
 
@@ -964,6 +983,7 @@ class ScanBar(ttk.LabelFrame):
                     self.logger.log(info["status"], f"[{info['info']['port']}]:", info["msg"])
 
     def start_scan(self):  # 20500 - 25000
+        self.logger.log(INFO, "开始扫描")
         if self.in_scan:
             return
 
@@ -1002,7 +1022,7 @@ class ScanBar(ttk.LabelFrame):
             sleep(0.1)
             self.pause_button.configure(state=DISABLED)
             self.scan_obj.pause()
-            self.logger.log(INFO, "暂停扫描")
+            self.logger.log(DEBUG, "暂停扫描")
             while self.scan_obj.working_worker > 0:
                 self.logger.log(INFO, "等待所有线程暂停工作, 工作中线程数量:", self.scan_obj.working_worker)
                 sleep(0.1)
@@ -1014,10 +1034,10 @@ class ScanBar(ttk.LabelFrame):
     def resume_scan(self):
         def task():
             self.pause_button.configure(state=DISABLED)
+            self.logger.log(DEBUG, "恢复扫描")
             self.scan_obj.resume()
-            self.logger.log(INFO, "恢复扫描")
             while self.scan_obj.working_worker != self.scan_obj.thread_num:
-                self.logger.log(INFO, "等待所有线程开始工作, 工作中线程数量:", self.scan_obj.working_worker)
+                self.logger.log(DEBUG, "等待所有线程开始工作, 工作中线程数量:", self.scan_obj.working_worker)
                 sleep(0.1)
             self.pause_button.configure(state=NORMAL)
 
@@ -1033,12 +1053,12 @@ class ScanBar(ttk.LabelFrame):
 
         def stop_task():
             self.in_scan = False
+            self.logger.log(DEBUG, "停止扫描")
             self.scan_obj.stop()
-            self.logger.log(INFO, "停止扫描")
             while self.scan_obj.worker_count != 0:
                 sleep(0.1)
-                self.logger.log(INFO, "等待线程结束, 剩余工作线程线程数量:", self.scan_obj.worker_count)
-            self.logger.log(INFO, "线程已全部结束")
+                self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
+            self.logger.log(DEBUG, "工作线程已全部结束")
             self.start_button.configure(state=NORMAL)
             self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
             self.progress_stop()
@@ -1047,11 +1067,17 @@ class ScanBar(ttk.LabelFrame):
         self.taskbar.SetProgressState(TBPFLAG.TBPF_INDETERMINATE)
 
     def check_over_thread(self):
+        self.logger.log(DEBUG, "检测扫描结束线程启动...")
         if not self.in_scan:
             return
-        while self.scan_obj.in_scan:
-            sleep(0.1)
 
+        while not self.scan_obj.in_scan:
+            sleep(0.05)
+
+        while self.scan_obj.in_scan:
+            sleep(0.05)
+
+        self.logger.log(DEBUG, "检测到扫描已结束")
         if self.in_scan:
             self.in_scan = False
             self.stop_button.configure(state=DISABLED)
@@ -1066,8 +1092,8 @@ class ScanBar(ttk.LabelFrame):
         # self.progress_bar.finish()
 
     def check_host(self, host: str) -> bool:
-        self.logger.log(INFO, f"检测域名 [{host}] ...")
-        self.logger.log(INFO, "樱花穿透域名检测...")
+        self.logger.log(DEBUG, f"检测域名 [{host}] ...")
+        self.logger.log(DEBUG, "樱花穿透域名检测...")
         if host.startswith("frp-") and host.endswith(".top"):
             self.logger.log(WARNING, f"疑似检测到Sakura Frp域名 ({host})")
             ret = MessageBox(self.winfo_id(),
@@ -1077,9 +1103,9 @@ class ScanBar(ttk.LabelFrame):
             if ret != IDYES:
                 return False
 
-        self.logger.log(INFO, "开始ping测试...")
+        self.logger.log(DEBUG, "开始ping测试...")
         delay = ping(host)
-        if delay is not None:
+        if isinstance(delay, float) and float != 0.0:
             self.logger.log(INFO, f"域名存活, 延迟: {round(delay * 1000, 2)} ms")
             return True
         else:

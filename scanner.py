@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import vars
+from sys import stderr
 from time import sleep
 from io import BytesIO
 from copy import deepcopy
@@ -142,6 +143,7 @@ class ServerScanner:
     def check_callback_over_thread(self):
         while self.callback_count > 0:
             sleep(0.05)
+        sleep(0.2)
         self.in_scan = False
 
 
