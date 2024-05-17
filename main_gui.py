@@ -274,7 +274,7 @@ class Logger(ttk.Frame):
         self.log_count += 1
         self.set_log_count()
 
-        y_view = self.list_box.yview()
+        y_view = [round(i, 1) for i in self.list_box.yview()]
         if y_view[1] == 1.0 or (all(i == 0.0 for i in y_view)):
             self.list_box.yview_moveto(1.0)
         if self.log_lock.locked():
@@ -1115,3 +1115,5 @@ class ScanBar(ttk.LabelFrame):
                        "域名错误",
                        MB_OK | MB_ICONERROR)
             return False
+
+
