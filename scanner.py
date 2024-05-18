@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 import vars
-from sys import stderr
 from time import sleep
 from io import BytesIO
 from copy import deepcopy
@@ -9,21 +8,9 @@ from base64 import b64decode
 from PIL import Image, ImageTk
 from queue import Queue, Empty
 from threading import Thread, Lock
-
-
-def import_big_library():
-    try:
-        from mcstatus.address import Address
-        from mcstatus.pinger import ServerPinger
-        from mcstatus.protocol.connection import TCPSocketConnection
-        globals()["Address"] = Address
-        globals()["ServerPinger"] = ServerPinger
-        globals()["TCPSocketConnection"] = TCPSocketConnection
-    except ImportError:
-        print("无法多线程导入mcstatus库", file=stderr)
-
-
-Thread(target=import_big_library).start()
+from mcstatus.address import Address
+from mcstatus.pinger import ServerPinger
+from mcstatus.protocol.connection import TCPSocketConnection
 
 
 class ServerScanner:
