@@ -35,31 +35,30 @@ class Progress(object):
             warnings.warn('Please initialise the object (method: Progress.initialise())')
             return
 
-        match value:
-            case 'normal':
-                taskbar.SetProgressState(self.thisWindow, 0)
-                self.state = 'normal'
+        if value == 'normal':
+            taskbar.SetProgressState(self.thisWindow, 0)
+            self.state = 'normal'
 
-            case 'warning':
-                taskbar.SetProgressState(self.thisWindow, 10)
-                self.state = 'warning'
+        elif value == 'warning':
+            taskbar.SetProgressState(self.thisWindow, 10)
+            self.state = 'warning'
 
-            case 'error':
-                taskbar.SetProgressState(self.thisWindow, 15)
-                self.state = 'error'
+        elif value == 'error':
+            taskbar.SetProgressState(self.thisWindow, 15)
+            self.state = 'error'
 
-            case 'loading':
-                taskbar.SetProgressState(self.thisWindow, -15)
-                self.state = 'loading'
+        elif value == 'loading':
+            taskbar.SetProgressState(self.thisWindow, -15)
+            self.state = 'loading'
 
-            case 'done':
-                ctypes.windll.user32.FlashWindow(self.thisWindow, True)
-                self.state = 'done'
+        elif value == 'done':
+            ctypes.windll.user32.FlashWindow(self.thisWindow, True)
+            self.state = 'done'
 
-            case _:
-                warnings.warn(
-                    'Invalid Argument {}. Please select one from (normal, warning, error, loading, done).'.format(
-                        value))
+        else:
+            warnings.warn(
+                'Invalid Argument {}. Please select one from (normal, warning, error, loading, done).'.format(
+                    value))
 
     def setProgress(self, value: int):
         if value > 100 or value < 0:
