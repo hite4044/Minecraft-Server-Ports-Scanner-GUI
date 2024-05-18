@@ -87,9 +87,9 @@ class ServerScanner:
             sleep(0.1)
 
     def stop(self):
+        self.in_scan = False
         if self.pause_lock.locked():
             self.pause_lock.release()
-        self.in_scan = False
 
     def stop_and_wait(self):
         self.stop()

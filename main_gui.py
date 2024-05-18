@@ -970,10 +970,8 @@ class ScanBar(ttk.LabelFrame):
         CoUninitialize()
 
     def callback(self, info: Any):
-        if not self.in_scan:
-            return
-        self.progress_var += 1
         with self.callback_lock:
+            self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
             self.taskbar.SetProgressValue(self.progress_var, self.progress_bar.max_)
             if isinstance(info, ServerInfo):
@@ -1055,8 +1053,9 @@ class ScanBar(ttk.LabelFrame):
         def stop_task():
             self.in_scan = False
             self.logger.log(DEBUG, "停止扫描")
+            self.taskbar.SetProgressState(TBPFLAG.TBPF_ERROR)
             self.scan_obj.stop()
-            while self.scan_obj.worker_count != 0:
+            while self.scan_obj.worker_count > 0 or self.scan_obj.callback_count > 0:
                 sleep(0.1)
                 self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
             self.logger.log(DEBUG, "工作线程已全部结束")
