@@ -987,7 +987,7 @@ class ScanBar(ttk.LabelFrame):
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
-            self.taskbar.setProgress(int(self.progress_var / self.progress_bar.max_ * 100))
+            self.taskbar.set_progress(int(self.progress_var / self.progress_bar.max_ * 100))
             if isinstance(info, ServerInfo):
                 self.server_list.add_server(info)
                 self.logger.log(INFO, f"[{info.port}]:", "检测到MC服务器")
@@ -1092,7 +1092,7 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=DISABLED)
             self.start_button.configure(state=NORMAL)
             self.progress_stop()
-            self.taskbar.setProgress(0)
+            self.taskbar.set_progress(0)
             # This is not working, but it is also not important  :-(
             # win32gui.FlashWindowEx(self.hwnd, 3, 1, 500)
             self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题

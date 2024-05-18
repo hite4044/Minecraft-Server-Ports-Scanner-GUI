@@ -30,37 +30,7 @@ class Progress(object):
         self.progress = 0
         self.initialised = True
 
-    def setState(self, value):
-        if not self.initialised:
-            warnings.warn('Please initialise the object (method: Progress.initialise())')
-            return
-
-        if value == 'normal':
-            taskbar.SetProgressState(self.thisWindow, 0)
-            self.state = 'normal'
-
-        elif value == 'warning':
-            taskbar.SetProgressState(self.thisWindow, 10)
-            self.state = 'warning'
-
-        elif value == 'error':
-            taskbar.SetProgressState(self.thisWindow, 15)
-            self.state = 'error'
-
-        elif value == 'loading':
-            taskbar.SetProgressState(self.thisWindow, -15)
-            self.state = 'loading'
-
-        elif value == 'done':
-            ctypes.windll.user32.FlashWindow(self.thisWindow, True)
-            self.state = 'done'
-
-        else:
-            warnings.warn(
-                'Invalid Argument {}. Please select one from (normal, warning, error, loading, done).'.format(
-                    value))
-
-    def setProgress(self, value: int):
+    def set_progress(self, value: int):
         if value > 100 or value < 0:
             warnings.warn('Invalid Argument {} .Please select one from (<=100,>=0).'.format(value))
 
