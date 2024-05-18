@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from PIL import Image
 from PIL.ImageTk import PhotoImage
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.tooltip import ToolTip
@@ -134,7 +133,7 @@ class PlayersInfo(ttk.Frame, Infer):
 
     def leave(self, _):
         print("Hide ToolTip")
-        #self.tip.hide_tip()
+        # self.tip.hide_tip()
         self.player_list.unbind("<Motion>", self.motion_id)
         self.player_list.bind("<Motion>", self.tip.move_tip)
         self.player_list.unbind("<Leave>", self.leave_id)

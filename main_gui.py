@@ -3,8 +3,11 @@ import re
 from queue import Queue
 
 import pyglet
+import win32gui
+
 from widgets import *
-from win_tool import *
+import taskbar_lib
+
 from sys import stderr
 from ping3 import ping
 from typing import Dict
@@ -887,6 +890,8 @@ class RangeSelector(ttk.Frame):
 class ScanBar(ttk.LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
         super(ScanBar, self).__init__(master, text="扫描")
+        self.hwnd = None
+
         self.logger = logger
         self.server_list = server_list
 
@@ -953,7 +958,7 @@ class ScanBar(ttk.LabelFrame):
         CoInitialize()
         timeout = 2.0
         timer = perf_counter()
-        main_window = 0
+        # main_window = 0
         while perf_counter() - timer < timeout:
             hwnd = self.winfo_id()
             while True:
@@ -963,14 +968,16 @@ class ScanBar(ttk.LabelFrame):
                 else:
                     hwnd = copy(parent)
             if GetWindowText(hwnd) == "MC服务器扫描器" and GetClassName(hwnd) == "TkTopLevel":
-                self.taskbar = TaskbarApi(hwnd)
                 main_window = copy(hwnd)
                 break
             sleep(0.05)
         else:
             print("main_gui.taskbar_create: Main Window Not Found!", file=stderr)
-        print(f"Done! Found main window, use: {round((perf_counter() - timer) * 1000, 2)} ms, hWnd: {main_window}")
-        self.taskbar = TaskbarApi(main_window)
+            raise RuntimeError("Main Window Not Found!")
+        self.hwnd = main_window
+        print(f"Done! Found main window, use: {round((perf_counter() - timer) * 1000, 2)} ms, hWnd: {self.hwnd}")
+        self.taskbar = taskbar_lib.Progress(self.hwnd)
+        self.taskbar.init()
         self.start_button.configure(state=NORMAL)
         CoUninitialize()
 
@@ -980,7 +987,7 @@ class ScanBar(ttk.LabelFrame):
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
-            self.taskbar.SetProgressValue(self.progress_var, self.progress_bar.max_)
+            self.taskbar.setProgress(int(self.progress_var / self.progress_bar.max_ * 100))
             if isinstance(info, ServerInfo):
                 self.server_list.add_server(info)
                 self.logger.log(INFO, f"[{info.port}]:", "检测到MC服务器")
@@ -1011,7 +1018,6 @@ class ScanBar(ttk.LabelFrame):
         self.scan_obj.config(timeout, thread_num, self.callback)
         Thread(target=self.scan_obj.run, args=(host, range(start, stop))).start()
         Thread(target=self.check_over_thread, daemon=True).start()
-        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
         # 写入配置文件，使得下一次自动加载
         self.logger.log(INFO, f"将地址 [{host}] 写入配置文件。")
@@ -1035,7 +1041,6 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
-        self.taskbar.SetProgressState(TBPFLAG.TBPF_PAUSED)
 
     def resume_scan(self):
         def task():
@@ -1048,7 +1053,6 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
-        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
     def stop_scan(self):
         if not self.in_scan:
@@ -1066,11 +1070,9 @@ class ScanBar(ttk.LabelFrame):
                 self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
             self.logger.log(DEBUG, "工作线程已全部结束")
             self.start_button.configure(state=NORMAL)
-            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
             self.progress_stop()
 
         Thread(target=stop_task).start()
-        self.taskbar.SetProgressState(TBPFLAG.TBPF_INDETERMINATE)
 
     def check_over_thread(self):
         self.logger.log(DEBUG, "检测扫描结束线程启动...")
@@ -1090,8 +1092,9 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=DISABLED)
             self.start_button.configure(state=NORMAL)
             self.progress_stop()
-            FlashWindowCount(self.taskbar.hwnd, 1)
-            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
+            self.taskbar.setProgress(0)
+            # This is not working, but it is also not important  :-(
+            # win32gui.FlashWindowEx(self.hwnd, 3, 1, 500)
             self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题
 
     def progress_stop(self):
