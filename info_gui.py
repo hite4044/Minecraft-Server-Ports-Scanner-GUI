@@ -98,7 +98,7 @@ class PlayersInfo(ttk.Frame, Infer):
         self.motion_id = None
         self.text = ttk.Label(self, anchor=CENTER)
         self.player_list = tk.Listbox(self, width=15)
-        self.tip = ToolTip(self.player_list, "UUID: 114514", delay=0, alpha=0.8)
+        self.tip = ToolTip(self.player_list, "Nobody is in the server", delay=0, alpha=0.8)  # 怎么 homo 厨无处不在 恼
         self.text.pack(side=TOP, fill=X)
         self.player_list.pack(side=LEFT, fill=BOTH, expand=True)
         self.data = None

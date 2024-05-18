@@ -52,11 +52,12 @@ def set_default_font():
 
 
 def load_unifont():
-    pyglet.options['win32_gdi_font'] = True
-    try:
-        pyglet.font.add_file("assets/Unifont.otf")
-    except FileNotFoundError:
+    if not exists("assets/Unifont.otf"):  # 若字体文件不存在则退出
         print("Unifont字体文件丢失", file=stderr)
+        return
+
+    pyglet.options['win32_gdi_font'] = True
+    pyglet.font.add_file("assets/Unifont.otf")
 
 
 def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
@@ -268,6 +269,11 @@ class Logger(ttk.Frame):
 
         now_time = strftime("%H:%M:%S.") + str(time()).split(".")[-1][:3]
         log = {"id": self.log_count, "time": now_time, "level": level, "message": sep.join(map(str, values))}
+
+        if self.log_count in [i["id"] for i in self.logs]:  # 修复了Item n already exists的报错
+            log["id"] += 1
+            self.log_count += 1
+
         self.logs.append(log)
         if self.log_list.index(level.lower()) >= self.log_list.index(self.now_level):  # 比较是否超过日志等级
             self.insert_a_log(log)
@@ -1069,6 +1075,7 @@ class ScanBar(ttk.LabelFrame):
     def check_over_thread(self):
         self.logger.log(DEBUG, "检测扫描结束线程启动...")
         if not self.in_scan:
+            self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题
             return
 
         while not self.scan_obj.in_scan:
@@ -1115,5 +1122,3 @@ class ScanBar(ttk.LabelFrame):
                        "域名错误",
                        MB_OK | MB_ICONERROR)
             return False
-
-
