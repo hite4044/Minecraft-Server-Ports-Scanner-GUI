@@ -1,17 +1,13 @@
 # -*- coding: UTF-8 -*-
 import re
-from queue import Queue
-
 import pyglet
-import win32gui
-
+from vars import *
 from widgets import *
-import taskbar_lib
-
 from sys import stderr
 from ping3 import ping
 from typing import Dict
-from os.path import exists
+from queue import Queue
+from taskbar_lib import *
 from ttkbootstrap import Style
 from info_gui import InfoWindow
 from scanner import ServerScanner
@@ -19,6 +15,7 @@ from threading import Thread, Lock
 from tkinter import font, filedialog
 from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
+from os.path import exists, join as path_join
 from ttkbootstrap.scrolled import ScrolledFrame
 from comtypes import CoInitialize, CoUninitialize
 from time import perf_counter, sleep, time, strftime, localtime
@@ -85,16 +82,6 @@ def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
         break
 
 
-def get_hwnd_main_hwnd(hwnd: int):
-    while True:
-        print(hwnd, "P:", GetParent(hwnd))
-        if GetParent(hwnd) != 0:
-            hwnd = GetParent(hwnd)
-        else:
-            break
-    return hwnd
-
-
 class GUI(ttk.Window):
     def __init__(self):
         global scanbar
@@ -120,6 +107,7 @@ class GUI(ttk.Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.style.theme_use("solar")
+        self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
         Thread(target=self.set_icon).start()
         Thread(target=self.place_window_center).start()
 
@@ -128,6 +116,10 @@ class GUI(ttk.Window):
             self.wm_iconbitmap("assets/icon.ico")
         else:
             print("图标文件丢失", file=stderr)
+
+    def on_delete_window(self):
+        self.scan_bar.close_save_config()
+        self.destroy()
 
     def pack_widgets(self):
         self.title_bar.pack(fill=X, padx=10)
@@ -203,7 +195,7 @@ class ServerFilter(ttk.Frame):
         return ServersFilter(version, enable_re)
 
     def filtration(self, *_):
-        self.master.reload_server(self.get_filter())
+        self.master.__dict__["reload_server"](self.get_filter())
 
 
 class ServerCounter(ttk.Label):
@@ -890,8 +882,6 @@ class RangeSelector(ttk.Frame):
 class ScanBar(ttk.LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
         super(ScanBar, self).__init__(master, text="扫描")
-        self.hwnd = None
-
         self.logger = logger
         self.server_list = server_list
 
@@ -901,7 +891,7 @@ class ScanBar(ttk.LabelFrame):
         self.progress_var = 0
         self.callback_workers = 0
         self.taskbar = None
-        self.temp = 0
+        self.config_path = path_join(config_dir, "scan_config.json")
         self.user_address_operator = vars.UserAddressOperator()
         Thread(target=self.taskbar_create, daemon=True).start()
 
@@ -941,6 +931,22 @@ class ScanBar(ttk.LabelFrame):
         self.pause_button.pack(fill=X, expand=True, pady=2)
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
+        self.load_user_config()
+
+    def close_save_config(self):
+        if not exists(self.config_path):
+            try:
+                with open(self.config_path, "w", encoding="utf-8") as f:
+                    json_dump(self.get_config(), f, ensure_ascii=False, indent=4)
+            except OSError:
+                print("main_gui.close_save_config: Failed to save config!", file=stderr)
+
+    def load_user_config(self):
+        if exists(self.config_path):
+            with open(self.config_path, encoding="utf-8") as f:
+                config = json_load(f)
+                self.set_config(config)
+
     def get_config(self) -> dict:
         return {
             "host": self.host_input.get(),
@@ -959,7 +965,7 @@ class ScanBar(ttk.LabelFrame):
         CoInitialize()
         timeout = 2.0
         timer = perf_counter()
-        # main_window = 0
+        main_window = 0  # 默认值为0会使TaskbarApi可调用但无效
         while perf_counter() - timer < timeout:
             hwnd = self.winfo_id()
             while True:
@@ -974,11 +980,9 @@ class ScanBar(ttk.LabelFrame):
             sleep(0.05)
         else:
             print("main_gui.taskbar_create: Main Window Not Found!", file=stderr)
-            raise RuntimeError("Main Window Not Found!")
-        self.hwnd = main_window
-        print(f"Done! Found main window, use: {round((perf_counter() - timer) * 1000, 2)} ms, hWnd: {self.hwnd}")
-        self.taskbar = taskbar_lib.Progress(self.hwnd)
-        self.taskbar.init()
+        if main_window != 0:
+            print(f"Done! Found main window, use: {round((perf_counter() - timer) * 1000, 2)} ms, hWnd: {main_window}")
+        self.taskbar = TaskbarApi(main_window)
         self.start_button.configure(state=NORMAL)
         CoUninitialize()
 
@@ -986,7 +990,7 @@ class ScanBar(ttk.LabelFrame):
         with self.callback_lock:
             self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
-            self.taskbar.set_progress(int(self.progress_var / self.progress_bar.max_ * 100))
+            self.taskbar.SetProgressValue(self.progress_var, self.progress_bar.max_)
             if isinstance(info, ServerInfo):
                 self.server_list.add_server(info)
                 self.logger.log(INFO, f"[{info.port}]:", "检测到MC服务器")
@@ -1017,6 +1021,7 @@ class ScanBar(ttk.LabelFrame):
         self.scan_obj.config(timeout, thread_num, self.callback)
         Thread(target=self.scan_obj.run, args=(host, range(start, stop))).start()
         Thread(target=self.check_over_thread, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
         # 写入配置文件，使得下一次自动加载
         self.logger.log(INFO, f"将地址 [{host}] 写入配置文件。")
@@ -1040,6 +1045,7 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_PAUSED)
 
     def resume_scan(self):
         def task():
@@ -1052,6 +1058,7 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_NORMAL)
 
     def stop_scan(self):
         if not self.in_scan:
@@ -1070,9 +1077,11 @@ class ScanBar(ttk.LabelFrame):
                 self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
             self.logger.log(DEBUG, "工作线程已全部结束")
             self.start_button.configure(state=NORMAL)
+            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
             self.progress_stop()
 
         Thread(target=stop_task).start()
+        self.taskbar.SetProgressState(TBPFLAG.TBPF_INDETERMINATE)
 
     def check_over_thread(self):
         self.logger.log(DEBUG, "检测扫描结束线程启动...")
@@ -1092,14 +1101,12 @@ class ScanBar(ttk.LabelFrame):
             self.pause_button.configure(state=DISABLED)
             self.start_button.configure(state=NORMAL)
             self.progress_stop()
-            self.taskbar.set_progress(0)
-            # This is not working, but it is also not important  :-(
-            # win32gui.FlashWindowEx(self.hwnd, 3, 1, 500)
-            self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题
+            self.progress_bar.update_progress(self.progress_bar.max_)  # 掩耳盗铃一波
+            FlashWindowCount(self.taskbar.hwnd, 3, 0.3)
+            self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
 
     def progress_stop(self):
         self.progress_bar.update_now(self.progress_var)
-        # self.progress_bar.finish()
 
     def check_host(self, host: str) -> bool:
         self.logger.log(DEBUG, f"检测域名 [{host}] ...")
