@@ -124,7 +124,6 @@ class PlayersInfo(ttk.Frame, Infer):
         item = self.player_list.nearest(event.y)
         if item == -1:
             return
-        print("Build ToolTip")
         self.tip.show_tip()
         uuid = self.data.players[item]['id']
         self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + uuid)
@@ -133,8 +132,6 @@ class PlayersInfo(ttk.Frame, Infer):
         self.motion_id = self.player_list.bind("<Motion>", self.update_tip, "+")
 
     def leave(self, _):
-        print("Hide ToolTip")
-        #self.tip.hide_tip()
         self.player_list.unbind("<Motion>", self.motion_id)
         self.player_list.bind("<Motion>", self.tip.move_tip)
         self.player_list.unbind("<Leave>", self.leave_id)
@@ -145,7 +142,6 @@ class PlayersInfo(ttk.Frame, Infer):
             item = self.player_list.nearest(event.y)
             if item == -1 or item == self.now_item:
                 return
-            print("Update ToolTip")
             self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.data.players[item]['id'])
             self.now_item = item
 

@@ -890,6 +890,7 @@ class ScanBar(ttk.LabelFrame):
         self.progress_var = 0
         self.callback_workers = 0
         self.taskbar = None
+        self.temp = 0
         self.user_address_operator = vars.UserAddressOperator()
         Thread(target=self.taskbar_create, daemon=True).start()
 
@@ -971,8 +972,8 @@ class ScanBar(ttk.LabelFrame):
     def callback(self, info: Any):
         if not self.in_scan:
             return
+        self.progress_var += 1
         with self.callback_lock:
-            self.progress_var += 1
             self.progress_bar.update_progress(self.progress_var)
             self.taskbar.SetProgressValue(self.progress_var, self.progress_bar.max_)
             if isinstance(info, ServerInfo):
@@ -1115,5 +1116,3 @@ class ScanBar(ttk.LabelFrame):
                        "域名错误",
                        MB_OK | MB_ICONERROR)
             return False
-
-
