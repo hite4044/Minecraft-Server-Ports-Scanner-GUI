@@ -1075,7 +1075,6 @@ class ScanBar(ttk.LabelFrame):
     def check_over_thread(self):
         self.logger.log(DEBUG, "检测扫描结束线程启动...")
         if not self.in_scan:
-            self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题
             return
 
         while not self.scan_obj.in_scan:
@@ -1093,6 +1092,7 @@ class ScanBar(ttk.LabelFrame):
             self.progress_stop()
             FlashWindowCount(self.taskbar.hwnd, 1)
             self.taskbar.SetProgressState(TBPFLAG.TBPF_NOPROGRESS)
+            self.progress_bar.finish()  # 修复了进度条永远不会到达100%的问题
 
     def progress_stop(self):
         self.progress_bar.update_now(self.progress_var)
