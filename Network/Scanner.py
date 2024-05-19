@@ -8,9 +8,7 @@ from time import sleep
 from typing import List, Any
 
 from PIL import Image, ImageTk
-
-import vars
-
+from Libs import Vars
 
 class ServerScanner:
     def __init__(self):
@@ -202,7 +200,7 @@ class ServerInfo:
         if self.protocol_version == -1:
             self.protocol_info = {}
         else:
-            for ver in vars.protocol_map:
+            for ver in Vars.protocol_map:
                 if ver["version"] == self.protocol_version:
                     self.protocol_info: dict = ver
                     break
@@ -316,8 +314,8 @@ class DescriptionParser:
                     state["obfuscated"] = True
                 elif fmt_code == "r":  # 重置样式
                     pass
-                elif fmt_code in vars.color_map.keys():  # 颜色
-                    state["color"] = vars.color_map[fmt_code]
+                elif fmt_code in Vars.color_map.keys():  # 颜色
+                    state["color"] = Vars.color_map[fmt_code]
                 extras.append(state)
             else:
                 pass

@@ -1,12 +1,10 @@
 # -*- coding: UTF-8 -*-
 from PIL.ImageTk import PhotoImage
-from pyperclip import copy as copy_clipboard
 from ttkbootstrap.tooltip import ToolTip
-from win32con import MB_OK, MB_ICONINFORMATION
-from win32gui import MessageBox
+from win32con import MB_ICONINFORMATION
 
-from scanner import DescriptionParser, Port
-from widgets import *
+from Gui.Widgets import *
+from Network.Scanner import DescriptionParser, Port, ServerInfo
 
 
 class Infer:
@@ -45,7 +43,7 @@ class InfoWindow(ttk.Toplevel, Infer):
         if data.has_favicon:
             self.favicon_image = self.data.favicon
         else:
-            self.favicon_image = Image.open(r"assets/server_icon.png")
+            self.favicon_image = Image.open(r"../assets/server_icon.png")
         self.favicon_image = self.favicon_image.resize((128, 128))
         self.default_favicon = PhotoImage(self.favicon_image)
         self.favicon.configure(image=self.default_favicon)

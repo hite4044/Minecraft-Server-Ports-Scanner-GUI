@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 
 def main():
-    from main_gui import GUI
+    from Gui.UserInterface import GUI
     root = GUI()
     root.mainloop()
 

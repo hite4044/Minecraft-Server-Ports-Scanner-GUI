@@ -8,11 +8,11 @@ BG_COUNT = 20
 class Assets:
     @property
     def default_favicon(self) -> PhotoImage:
-        return PhotoImage(Image.open(r"assets/server_icon.png"))
+        return PhotoImage(Image.open(r"../assets/server_icon.png"))
 
     @property
     def background(self) -> PhotoImage:
-        image = Image.open(r"assets/light_dirt_background.png")  # 打开图像文件
+        image = Image.open(r"../assets/light_dirt_background.png")  # 打开图像文件
         width, height = image.size
         image = image.resize((width * 4, height * 4))
         width, height = image.size
