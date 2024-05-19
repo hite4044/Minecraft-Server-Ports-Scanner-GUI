@@ -5,7 +5,8 @@ import comtypes.client as cc
 from win32gui import FlashWindowEx
 
 cc.GetModule(r"assets\TaskbarLib.tlb")
-import comtypes.gen.TaskbarLib as TaskbarLib
+
+from comtypes.gen import TaskbarLib
 
 
 class FLASHW(Enum):

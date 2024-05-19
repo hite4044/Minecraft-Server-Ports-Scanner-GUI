@@ -2,6 +2,7 @@
 
 def main():
     from Gui.UserInterface import GUI
+
     root = GUI()
     root.mainloop()
 
