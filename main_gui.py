@@ -1,29 +1,21 @@
 # -*- coding: UTF-8 -*-
 import re
+from base64 import b64decode, b64encode
+from json import load as json_load, dump as json_dump, JSONDecodeError
+from os.path import exists
+from pickle import loads as pickle_loads, dumps as pickle_dumps
 from queue import Queue
+from sys import stderr
+from threading import Thread, Lock
+from time import perf_counter, sleep, time, strftime, localtime
+from tkinter import font, filedialog
+from typing import Dict
 
 import pyglet
-import win32gui
-
-from widgets import *
-import taskbar_lib
-
-from sys import stderr
+from comtypes import CoInitialize, CoUninitialize
 from ping3 import ping
-from typing import Dict
-from os.path import exists
-from ttkbootstrap import Style
-from info_gui import InfoWindow
-from scanner import ServerScanner
-from threading import Thread, Lock
-from tkinter import font, filedialog
-from base64 import b64decode, b64encode
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap.scrolled import ScrolledFrame
-from comtypes import CoInitialize, CoUninitialize
-from time import perf_counter, sleep, time, strftime, localtime
-from pickle import loads as pickle_loads, dumps as pickle_dumps
-from json import load as json_load, dump as json_dump, JSONDecodeError
 from win32con import (MB_ICONQUESTION,
                       MB_ICONWARNING,
                       MB_YESNOCANCEL,
@@ -41,6 +33,11 @@ from win32gui import (EnumChildWindows,
                       FindWindow,
                       MessageBox,
                       GetParent)
+
+import taskbar_lib
+from info_gui import InfoWindow
+from scanner import ServerScanner
+from widgets import *
 
 DEBUG = "debug"
 scanbar: Any = None
