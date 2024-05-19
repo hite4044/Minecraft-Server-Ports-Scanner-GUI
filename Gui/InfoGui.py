@@ -18,6 +18,8 @@ class InfoWindow(ttk.Toplevel, Infer):
     """信息主窗口"""
 
     def __init__(self, master: Misc, data: ServerInfo):
+        from Gui.Widgets import MOTD, Tabs
+
         super(InfoWindow, self).__init__(master=master)
         self.favicon_image = None
         self.default_favicon = None
@@ -43,7 +45,7 @@ class InfoWindow(ttk.Toplevel, Infer):
         if data.has_favicon:
             self.favicon_image = self.data.favicon
         else:
-            self.favicon_image = Image.open(r"../assets/server_icon.png")
+            self.favicon_image = Image.open(r"assets/server_icon.png")
         self.favicon_image = self.favicon_image.resize((128, 128))
         self.default_favicon = PhotoImage(self.favicon_image)
         self.favicon.configure(image=self.default_favicon)
@@ -185,6 +187,8 @@ class VersionInfo(ttk.Frame, Infer):
     """版本信息组件"""
 
     def __init__(self, master: Misc):
+        from Gui.Widgets import MOTD
+
         super(VersionInfo, self).__init__(master)
         self.data = None
 
@@ -223,7 +227,7 @@ class VersionInfo(ttk.Frame, Infer):
         self.data = data
 
         self.version_name_text.configure(text="版本名：")
-        temp_data = copy(data)
+        temp_data = data
         if "§" in data.version_name:
             temp_data.description_json = DescriptionParser.format_chars_to_extras(temp_data.version_name)
         else:

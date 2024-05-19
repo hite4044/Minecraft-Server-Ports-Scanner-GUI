@@ -864,7 +864,7 @@ class ServerFrame(ttk.Frame):
         if self.data.has_favicon:
             self.favicon.configure(image=self.data.favicon_photo)
         else:
-            self.default_favicon = tk.PhotoImage(master=self, file=r"../assets/server_icon.png")
+            self.default_favicon = tk.PhotoImage(master=self, file=r"assets/server_icon.png")
             self.favicon.configure(image=self.default_favicon)
 
         self.MOTD.load_motd(self.data)

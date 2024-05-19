@@ -8,7 +8,6 @@ from time import sleep
 from typing import List, Any
 
 from PIL import Image, ImageTk
-
 from Libs import Vars
 
 
