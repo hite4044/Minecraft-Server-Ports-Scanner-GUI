@@ -41,12 +41,13 @@ class InfoWindow(Toplevel, Infer):
         self.load_data(data)
         self.pack_widgets()
 
+    # FIXME: 这是为什么？没人碰了他！
     def load_data(self, data: ServerInfo):
         self.data = data
         if data.has_favicon:
             self.favicon_image = self.data.favicon
         else:
-            self.favicon_image = Image.open(r"assets/server_icon.png")
+            self.favicon_image = Image.open(r"assets\server_icon.png")
         self.favicon_image = self.favicon_image.resize((128, 128))
         self.default_favicon = PhotoImage(self.favicon_image)
         self.favicon.configure(image=self.default_favicon)
