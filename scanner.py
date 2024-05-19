@@ -8,9 +8,6 @@ from time import sleep
 from typing import List, Any
 
 from PIL import Image, ImageTk
-from mcstatus.address import Address
-from mcstatus.pinger import ServerPinger
-from mcstatus.protocol.connection import TCPSocketConnection
 
 import vars
 
@@ -151,6 +148,10 @@ class Port:
         获取服务器在`#Status_Response`包中的返回JSON
         https://wiki.vg/Server_List_Ping#Status_Response
         """
+        from mcstatus.address import Address
+        from mcstatus.pinger import ServerPinger
+        from mcstatus.protocol.connection import TCPSocketConnection
+
         info = {"host": self.host, "port": self.port}
         try:
             with TCPSocketConnection((self.host, self.port), self.timeout) as connection:
