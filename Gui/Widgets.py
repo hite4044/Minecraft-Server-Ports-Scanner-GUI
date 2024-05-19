@@ -32,7 +32,7 @@ from win32gui import GetWindowText, SetWindowText, FindWindow, FindWindowEx, Get
 from Gui.InfoGui import InfoWindow
 from Libs.ColorLib import Color
 from Libs.TaskbarLib import TaskbarApi, TBPFLAG
-from Libs.Vars import scale_rater, config_dir, UserAddressOperator, server_addresses
+from Libs.Vars import scale_rater, config_dir, UserAddressOperator, server_addresses, color_map_hex
 from Network.Scanner import ServerInfo, ServerScanner
 
 ERROR = "error"
@@ -56,7 +56,7 @@ class MOTD(ttk.Text):
                 tag_font = Font(family="Unifont", size=12)
                 if extra.get("color"):
                     if "#" not in extra["color"]:
-                        color = vars.color_map_hex[extra["color"]]
+                        color = color_map_hex[extra["color"]]
                     else:
                         color = extra["color"]
                     self.tag_configure(tag, foreground=color)
