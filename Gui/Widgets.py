@@ -1,6 +1,4 @@
 # -*- coding: UTF-8 -*-
-import re
-import tkinter as tk
 from base64 import b64decode, b64encode
 from copy import copy
 from json import load as json_load, JSONDecodeError, dump as json_dump
@@ -9,19 +7,20 @@ from os.path import join as path_join, exists
 from pickle import loads as pickle_loads, dumps as pickle_dumps
 from queue import Queue
 from random import randint
+from re import match, error
 from sys import stderr
 from threading import Lock, Thread
 from time import strftime, localtime, time, sleep, perf_counter
-from tkinter import Misc, filedialog
+from tkinter import Misc, filedialog, Event, BooleanVar, PhotoImage
 from tkinter.font import Font
 from typing import Any, List, Dict
 
-import ttkbootstrap as ttk
 from PIL import ImageDraw, ImageTk, Image
 from comtypes import CoInitialize, CoUninitialize
 from ping3 import ping
 from pyperclip import copy as copy_clipboard, copy
-from ttkbootstrap import Style
+from ttkbootstrap import Style, Text, Label, Entry, Frame, Combobox, Scale, Notebook, Canvas, Checkbutton, Separator, \
+    Scrollbar, Treeview, Menu, Button, Toplevel, LabelFrame
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 from win32con import MB_OK, MB_ICONERROR, MB_YESNOCANCEL, MB_ICONQUESTION, IDYES, IDNO, IDCANCEL, MB_ICONWARNING, \
@@ -40,8 +39,8 @@ DEBUG = "debug"
 scanbar: Any = None
 
 
-class MOTD(ttk.Text):
-    def __init__(self, master: tk.Misc):
+class MOTD(Text):
+    def __init__(self, master: Misc):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
     def load_motd(self, data: ServerInfo):
@@ -77,15 +76,15 @@ class MOTD(ttk.Text):
         self.configure(state=DISABLED)
 
 
-class EntryScale(ttk.Frame):
+class EntryScale(Frame):
     def __init__(self, master: Misc, _min: Any, _max: Any, value: Any, text: str, fmt: Any):
         super(EntryScale, self).__init__(master)
         self.min = _min
         self.max = _max
         self.fmt = fmt
-        self.text = ttk.Label(self, text=text)
-        self.entry = ttk.Entry(self, width=8)
-        self.scale = ttk.Scale(self, from_=_min, to=_max, command=self.scale_set_value)
+        self.text = Label(self, text=text)
+        self.entry = Entry(self, width=8)
+        self.scale = Scale(self, from_=_min, to=_max, command=self.scale_set_value)
 
         self.entry.bind("<KeyRelease>", self.entry_set_value)
         self.entry.insert(END, str(value))
@@ -140,12 +139,12 @@ class EntryScaleFloat(EntryScale):
         super(EntryScaleFloat, self).__init__(master, _min, _max, value, text, float)
 
 
-class TextEntry(ttk.Frame):
+class TextEntry(Frame):
     def __init__(self, master: Misc, tip: str, value: str = ""):
         super(TextEntry, self).__init__(master)
 
-        self.text = ttk.Label(self, text=tip)
-        self.entry = ttk.Entry(self)
+        self.text = Label(self, text=tip)
+        self.entry = Entry(self)
 
         self.entry.insert(0, value)
 
@@ -163,12 +162,12 @@ class TextEntry(ttk.Frame):
         self.entry.insert(0, text)
 
 
-class TextCombobox(ttk.Frame):
+class TextCombobox(Frame):
     def __init__(self, master: Misc, tip: str, value: List[str] = None):
         super(TextCombobox, self).__init__(master)
 
-        self.text = ttk.Label(self, text=tip)
-        self.combobox = ttk.Combobox(self, values=value)
+        self.text = Label(self, text=tip)
+        self.combobox = Combobox(self, values=value)
 
         if len(value) > 0:
             self.combobox.current(0)
@@ -184,11 +183,11 @@ class TextCombobox(ttk.Frame):
         self.combobox.insert(0, text)
 
 
-class Tabs(ttk.Notebook):
+class Tabs(Notebook):
     pass
 
 
-class RangeScale(ttk.Canvas):
+class RangeScale(Canvas):
     def __init__(self, master: Misc):
         """
         范围选择条
@@ -273,7 +272,7 @@ class RangeScale(ttk.Canvas):
         self.delete(ALL)
         self.create_image(0, 0, anchor=NW, image=self.image)
 
-    def mouse_move(self, event: tk.Event):
+    def mouse_move(self, event: Event):
         min_box = (self.min_offset, 0, self.min_offset + 15, 15)
         value = min_box[0] < event.x < min_box[2] and min_box[1] < event.y < min_box[3]
         if value != self.min_highlight:
@@ -344,7 +343,7 @@ class RangeScale(ttk.Canvas):
         return (self.winfo_width() - self.winfo_height()) * self.max_percentage
 
 
-class TipEntry(ttk.Entry):
+class TipEntry(Entry):
     def __init__(self, master: Misc, tip: str = "在此输入内容"):
         super(TipEntry, self).__init__(master)
         self.on_tip = False
@@ -367,7 +366,7 @@ class TipEntry(ttk.Entry):
         self.tip = tip
 
 
-class ProgressBar(ttk.Canvas):
+class ProgressBar(Canvas):
     def __init__(self, master: Misc, text: str = "0%"):
         super(ProgressBar, self).__init__(master, height=26)
         self.color = Style().colors
@@ -449,29 +448,29 @@ class ServersFilter:
         version_name = data.version_name
         if self.enable_re:
             try:
-                return bool(re.match(self.version_keywords, version_name))
-            except re.error:
+                return bool(match(self.version_keywords, version_name))
+            except error:
                 raise ValueError("正则表达式错误")
         else:
             return self.version_keywords in version_name
 
 
-class ServerFilter(ttk.Frame):
+class ServerFilter(Frame):
     def __init__(self, master: Misc):
         super(ServerFilter, self).__init__(master)
-        self.version_frame = ttk.Frame(self)
+        self.version_frame = Frame(self)
         self.version_entry = TextEntry(self.version_frame, tip="版本名: ")
-        self.version_re_var = tk.BooleanVar(self.version_frame, value=False)
-        self.version_re_check = ttk.Checkbutton(self.version_frame,
-                                                text="正则匹配",
-                                                style="round-toggle",
-                                                variable=self.version_re_var)
+        self.version_re_var = BooleanVar(self.version_frame, value=False)
+        self.version_re_check = Checkbutton(self.version_frame,
+                                            text="正则匹配",
+                                            style="round-toggle",
+                                            variable=self.version_re_var)
 
-        self.sep = ttk.Separator(self, orient=VERTICAL)
+        self.sep = Separator(self, orient=VERTICAL)
 
-        self.buttons = ttk.Frame(self)
-        self.reset_button = ttk.Button(self.buttons, text="重置", style="outline")
-        self.filter_button = ttk.Button(self.buttons, text="筛选", style="outline")
+        self.buttons = Frame(self)
+        self.reset_button = Button(self.buttons, text="重置", style="outline")
+        self.filter_button = Button(self.buttons, text="筛选", style="outline")
 
         self.version_entry.entry.bind("<Return>", self.filtration)
         self.filter_button.bind("<Button-1>", self.filtration)
@@ -504,7 +503,7 @@ class ServerFilter(ttk.Frame):
         self.master.__dict__["reload_server"](self.get_filter())
 
 
-class ServerCounter(ttk.Label):
+class ServerCounter(Label):
     def __init__(self, master: Misc):
         super(ServerCounter, self).__init__(master, text="0/0")
 
@@ -512,7 +511,7 @@ class ServerCounter(ttk.Label):
         self.configure(text=f"{show_servers}/{all_servers}")
 
 
-class Logger(ttk.Frame):
+class Logger(Frame):
     def __init__(self, master: Misc):
         super(Logger, self).__init__(master)
 
@@ -526,13 +525,13 @@ class Logger(ttk.Frame):
         self.log_queue = Queue()
 
         # 信息条
-        self.info_bar = ttk.Frame(self)
+        self.info_bar = Frame(self)
         self.info_bar.pack(fill=X)
 
         # 日志等级选择框
-        self.select_frame = ttk.Frame(self.info_bar)
-        self.select_text = ttk.Label(self.select_frame, text="日志等级:")
-        self.select_combobox = ttk.Combobox(self.select_frame, values=list(self.levels.keys()), state=READONLY)
+        self.select_frame = Frame(self.info_bar)
+        self.select_text = Label(self.select_frame, text="日志等级:")
+        self.select_combobox = Combobox(self.select_frame, values=list(self.levels.keys()), state=READONLY)
         self.select_combobox.set("信息")
         self.select_combobox.bind("<<ComboboxSelected>>", self.on_level_change)
         self.select_text.pack(side=LEFT, padx=5)
@@ -540,13 +539,13 @@ class Logger(ttk.Frame):
         self.select_frame.pack(side=LEFT, padx=5, pady=5)
 
         # 日志数量显示
-        self.log_count_label = ttk.Label(self.info_bar, text="日志数量: 0")
+        self.log_count_label = Label(self.info_bar, text="日志数量: 0")
         self.log_count_label.pack(side=RIGHT, padx=5, pady=5)
 
         # 日志显示列表
-        self.list_box_bar = ttk.Scrollbar(self)
+        self.list_box_bar = Scrollbar(self)
         self.list_box_bar.pack(side=RIGHT, fill=Y)
-        self.list_box = ttk.Treeview(self, columns=["0", "1", "2"], show=HEADINGS, yscrollcommand=self.list_box_bar.set)
+        self.list_box = Treeview(self, columns=["0", "1", "2"], show=HEADINGS, yscrollcommand=self.list_box_bar.set)
         self.list_box_bar.configure(command=self.list_box.yview)
         self.list_box.column("0", width=80, anchor=CENTER)
         self.list_box.column("1", width=21, anchor=CENTER)
@@ -606,7 +605,7 @@ class Logger(ttk.Frame):
                                      self.levels_res[log["level"]],
                                      log["message"]))
 
-    def on_menu(self, event: tk.Event):
+    def on_menu(self, event: Event):
         """弹出右键菜单"""
         self.list_box.event_generate("<Button-1>")
         try:
@@ -614,12 +613,12 @@ class Logger(ttk.Frame):
         except IndexError:
             return
         log_text = self.list_box.item(select)["values"][2]
-        menu = ttk.Menu()
+        menu = Menu()
         menu.add_command(label="复制", command=lambda: copy_clipboard(log_text))
         menu.post(event.x_root, event.y_root)
 
 
-class ServerInfoFrame(ttk.Frame):
+class ServerInfoFrame(Frame):
     def __init__(self, master: Misc):
         super(ServerInfoFrame, self).__init__(master)
 
@@ -630,13 +629,13 @@ class ServerInfoFrame(ttk.Frame):
         self.server_counter.update_count(show_servers, all_servers)
 
 
-class RecordBar(ttk.Frame):
+class RecordBar(Frame):
     def __init__(self, master: Misc, server_list: Any):
         super(RecordBar, self).__init__(master)
         self.server_list = server_list
 
-        self.load_button = ttk.Button(self, text="加载", command=self.load_record, style="success-outline")
-        self.save_button = ttk.Button(self, text="保存", command=self.save_record, style="success-outline")
+        self.load_button = Button(self, text="加载", command=self.load_record, style="success-outline")
+        self.save_button = Button(self, text="保存", command=self.save_record, style="success-outline")
 
         self.pack_weights()
 
@@ -717,7 +716,7 @@ class RecordBar(ttk.Frame):
             json_dump(data, f)
 
 
-class ServerList(ttk.LabelFrame):
+class ServerList(LabelFrame):
     def __init__(self, master: Misc, logger: Logger):
         super(ServerList, self).__init__(master, text="服务器列表")
         self.add_lock = Lock()  # 服务器添加锁
@@ -730,9 +729,9 @@ class ServerList(ttk.LabelFrame):
         self.bind("<Configure>", self.update_info_pos)  # 本体设置
 
         self.server_filter = ServerFilter(self)  # 服务器筛选器
-        self.sep = ttk.Separator(self, orient=HORIZONTAL)  # 分割线
+        self.sep = Separator(self, orient=HORIZONTAL)  # 分割线
         self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
-        self.empty_tip = ttk.Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
+        self.empty_tip = Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
         self.record_bar = RecordBar(self, self)  # 保存加载功能
         self.servers_info = ServerInfoFrame(self.record_bar)  # 服务器数量信息
 
@@ -802,7 +801,7 @@ class ServerList(ttk.LabelFrame):
         else:
             self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
 
-    def on_delete_server(self, event: tk.Event):
+    def on_delete_server(self, event: Event):
         server_frame: ServerFrame = event.widget
         self.server_map.pop(server_frame.data)
         self.all_serverC -= 1
@@ -828,16 +827,16 @@ class ServerList(ttk.LabelFrame):
         return self.server_filter.get_filter()
 
 
-class ServerFrame(ttk.Frame):
+class ServerFrame(Frame):
     def __init__(self, master: Misc, data: ServerInfo):
         super().__init__(master)
         self.default_favicon = None
         self.data = data
         self.info_window = None
 
-        self.favicon = ttk.Label(self)
+        self.favicon = Label(self)
         self.MOTD = MOTD(self)
-        self.base_info = ttk.Label(self, font=("微软雅黑", 9))
+        self.base_info = Label(self, font=("微软雅黑", 9))
 
         self.events_add()
         self.pack_weights()
@@ -864,7 +863,7 @@ class ServerFrame(ttk.Frame):
         if self.data.has_favicon:
             self.favicon.configure(image=self.data.favicon_photo)
         else:
-            self.default_favicon = tk.PhotoImage(master=self, file=r"assets/server_icon.png")
+            self.default_favicon = PhotoImage(master=self, file=r"assets/server_icon.png")
             self.favicon.configure(image=self.default_favicon)
 
         self.MOTD.load_motd(self.data)
@@ -881,7 +880,7 @@ class ServerFrame(ttk.Frame):
         self.base_info.pack(anchor=NW, ipady=0, ipadx=0)
 
     def load_window(self, *_):
-        if isinstance(self.info_window, ttk.Toplevel):
+        if isinstance(self.info_window, Toplevel):
             if self.info_window.winfo_exists():
                 self.info_window.focus_set()
                 return
@@ -893,8 +892,8 @@ class ServerFrame(ttk.Frame):
             text += extra["text"]
         return text
 
-    def pop_menu(self, event: tk.Event):
-        menu = ttk.Menu()
+    def pop_menu(self, event: Event):
+        menu = Menu()
         menu.add_command(label="复制地址", command=self.copy_ip)
         menu.add_command(label="复制MOTD", command=self.copy_motd)
         menu.add_separator()
@@ -913,7 +912,7 @@ class ServerFrame(ttk.Frame):
         copy_clipboard(self.load_motd_text())
 
 
-class InfoProgressBar(ttk.Frame):
+class InfoProgressBar(Frame):
     def __init__(self, master: Misc, interval: float, text: str):
         super().__init__(master)
         self.value = 0
@@ -923,9 +922,9 @@ class InfoProgressBar(ttk.Frame):
         self.max_ = 0
         self.interval = interval
 
-        self.text = ttk.Label(self, text=text)
+        self.text = Label(self, text=text)
         self.progress = ProgressBar(self)
-        self.progress_text = ttk.Label(self, text="0 ports/s")
+        self.progress_text = Label(self, text="0 ports/s")
         self.text.pack(side=LEFT)
         self.progress.pack(side=LEFT, fill=X, expand=True)
         self.progress_text.pack(side=LEFT)
@@ -967,7 +966,7 @@ class InfoProgressBar(ttk.Frame):
         self.last_update = time()
 
 
-class PauseButton(ttk.Button):
+class PauseButton(Button):
     def __init__(self, master: Misc, start_cb: Any, pause_cb: Any, state: str = NORMAL):
         super(PauseButton, self).__init__(master, text="暂停", state=state)
         self.startCB = start_cb
@@ -986,14 +985,14 @@ class PauseButton(ttk.Button):
             self.configure(text="继续")
 
 
-class Title(ttk.Label):
+class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
         self.configure(font=("微软雅黑", 24))
 
 
-class TitleBar(ttk.Frame):
+class TitleBar(Frame):
     def __init__(self, master: Misc):
         super(TitleBar, self).__init__(master)
         self.title_text = Title(self)
@@ -1002,11 +1001,11 @@ class TitleBar(ttk.Frame):
         self.theme_selector.pack(side=RIGHT, padx=5, pady=5)
 
 
-class ThemesSelector(ttk.Frame):
+class ThemesSelector(Frame):
     def __init__(self, master: Misc):
         super(ThemesSelector, self).__init__(master)
-        self.select_text = ttk.Label(self, text="选择主题:")
-        self.theme_selector = ttk.Combobox(self, values=Style().theme_names(), state=READONLY)
+        self.select_text = Label(self, text="选择主题:")
+        self.theme_selector = Combobox(self, values=Style().theme_names(), state=READONLY)
         self.theme_selector.set(Style().theme_use())
         self.theme_selector.bind("<<ComboboxSelected>>", self.on_theme_selected)
         self.select_text.pack(side=LEFT, padx=5, pady=5)
@@ -1016,7 +1015,7 @@ class ThemesSelector(ttk.Frame):
         Style().theme_use(self.theme_selector.get())
 
 
-class RangeSelector(ttk.Frame):
+class RangeSelector(Frame):
     def __init__(self, master: Misc, text: str = "范围选择:", start: int = 0, stop: int = 100):
         super(RangeSelector, self).__init__(master)
         self.start = min(start, stop)
@@ -1024,10 +1023,10 @@ class RangeSelector(ttk.Frame):
         self.start_per = self.start / (self.start + self.stop)
         self.stop_per = self.stop / (self.start + self.stop)
 
-        self.range_text = ttk.Label(self, text=text)
+        self.range_text = Label(self, text=text)
         self.range_selector = RangeScale(self)
-        self.min_entry = ttk.Entry(self, width=8)
-        self.max_entry = ttk.Entry(self, width=8)
+        self.min_entry = Entry(self, width=8)
+        self.max_entry = Entry(self, width=8)
 
         self.range_selector.set(0, 1)
         self.range_selector.bind("<<RangeChanged>>", self.range_changed)
@@ -1142,7 +1141,7 @@ class RangeSelector(ttk.Frame):
         return int(self.start + (self.stop - self.start) * _max)
 
 
-class ScanBar(ttk.LabelFrame):
+class ScanBar(LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
         super(ScanBar, self).__init__(master, text="扫描")
         self.logger = logger
@@ -1163,11 +1162,11 @@ class ScanBar(ttk.LabelFrame):
         self.progress_bar.pack(side=BOTTOM, fill=X, expand=True, padx=5, pady=5)
 
         # 分割线2
-        self.sep2 = ttk.Separator(self)
+        self.sep2 = Separator(self)
         self.sep2.pack(side=BOTTOM, fill=X, padx=5)
 
         # 输入 Frame
-        self.input_frame = ttk.Frame(self)
+        self.input_frame = Frame(self)
         self.host_input = TextCombobox(self.input_frame, "域名: ", server_addresses)
         self.timeout_input = EntryScaleFloat(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
         self.thread_num_input = EntryScaleInt(self.input_frame, 1, 256, 192, "线程数: ")
@@ -1180,14 +1179,14 @@ class ScanBar(ttk.LabelFrame):
         self.range_input.pack(fill=X, expand=True)
 
         # 分割线
-        self.sep = ttk.Separator(self, orient="vertical")
+        self.sep = Separator(self, orient="vertical")
         self.sep.pack(side=LEFT, fill=Y)
 
         # 扫描控制 Frame
-        self.buttons = ttk.Frame(self)
-        self.start_button = ttk.Button(self.buttons, text="开始扫描", command=self.start_scan, state=DISABLED)
+        self.buttons = Frame(self)
+        self.start_button = Button(self.buttons, text="开始扫描", command=self.start_scan, state=DISABLED)
         self.pause_button = PauseButton(self.buttons, self.resume_scan, self.pause_scan, state=DISABLED)
-        self.stop_button = ttk.Button(self.buttons, text="停止", command=self.stop_scan, state=DISABLED)
+        self.stop_button = Button(self.buttons, text="停止", command=self.stop_scan, state=DISABLED)
 
         self.buttons.pack(side=RIGHT, padx=5)
         self.start_button.pack(fill=X, expand=True, pady=2)

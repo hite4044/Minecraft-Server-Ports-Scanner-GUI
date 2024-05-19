@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from PIL.ImageTk import PhotoImage
+from tkinter import Listbox
 from ttkbootstrap.tooltip import ToolTip
 from win32con import MB_ICONINFORMATION
 
@@ -14,7 +15,7 @@ class Infer:
         pass
 
 
-class InfoWindow(ttk.Toplevel, Infer):
+class InfoWindow(Toplevel, Infer):
     """信息主窗口"""
 
     def __init__(self, master: Misc, data: ServerInfo):
@@ -27,11 +28,11 @@ class InfoWindow(ttk.Toplevel, Infer):
         self.load_window_title()
         self.wm_resizable(True, True)
 
-        self.favicon = ttk.Label(self)
+        self.favicon = Label(self)
         self.MOTD = MOTD(self)
         self.tab = Tabs(self)
         self.base_info = BaseInfo(self)
-        self.reload_button = ttk.Button(self.base_info, text="重新获取信息", command=self.reget_info, style="success")
+        self.reload_button = Button(self.base_info, text="重新获取信息", command=self.reget_info, style="success")
         self.version_info = VersionInfo(self)
 
         if self.data.mod_server:
@@ -93,7 +94,7 @@ class InfoWindow(ttk.Toplevel, Infer):
         self.title(text)
 
 
-class PlayersInfo(ttk.Frame, Infer):
+class PlayersInfo(Frame, Infer):
     """玩家信息组件"""
 
     def __init__(self, master: Misc):
@@ -101,8 +102,8 @@ class PlayersInfo(ttk.Frame, Infer):
 
         self.leave_id = None
         self.motion_id = None
-        self.text = ttk.Label(self, anchor=CENTER)
-        self.player_list = tk.Listbox(self, width=15)
+        self.text = Label(self, anchor=CENTER)
+        self.player_list = Listbox(self, width=15)
         self.tip = ToolTip(self.player_list, "在这个服务器里我们找不到人 :-(", delay=0, alpha=0.8)
         self.text.pack(side=TOP, fill=X)
         self.player_list.pack(side=LEFT, fill=BOTH, expand=True)
@@ -125,7 +126,7 @@ class PlayersInfo(ttk.Frame, Infer):
 
         self.now_item = None
 
-    def enter(self, event: tk.Event):
+    def enter(self, event: Event):
         item = self.player_list.nearest(event.y)
         if item == -1:
             return
@@ -142,7 +143,7 @@ class PlayersInfo(ttk.Frame, Infer):
         self.player_list.unbind("<Leave>", self.leave_id)
         self.player_list.bind("<Leave>", self.tip.leave)
 
-    def update_tip(self, event: tk.Event):
+    def update_tip(self, event: Event):
         if self.tip.toplevel is not None:
             item = self.player_list.nearest(event.y)
             if item == -1 or item == self.now_item:
@@ -151,7 +152,7 @@ class PlayersInfo(ttk.Frame, Infer):
             self.now_item = item
 
 
-class BaseInfo(ttk.Frame, Infer):
+class BaseInfo(Frame, Infer):
     """服务器基本信息组件"""
 
     def __init__(self, master: Misc):
@@ -159,10 +160,10 @@ class BaseInfo(ttk.Frame, Infer):
         self.data = None
 
         self.player_list = PlayersInfo(self)
-        self.host = ttk.Label(self, anchor=CENTER)
-        self.ping = ttk.Label(self, anchor=CENTER)
-        self.version = ttk.Label(self, anchor=CENTER)
-        self.host_copy_b = ttk.Button(self, text="复制地址")
+        self.host = Label(self, anchor=CENTER)
+        self.ping = Label(self, anchor=CENTER)
+        self.version = Label(self, anchor=CENTER)
+        self.host_copy_b = Button(self, text="复制地址")
 
         self.pack_widgets()
 
@@ -183,7 +184,7 @@ class BaseInfo(ttk.Frame, Infer):
         self.host_copy_b.pack()
 
 
-class VersionInfo(ttk.Frame, Infer):
+class VersionInfo(Frame, Infer):
     """版本信息组件"""
 
     def __init__(self, master: Misc):
@@ -192,13 +193,13 @@ class VersionInfo(ttk.Frame, Infer):
         super(VersionInfo, self).__init__(master)
         self.data = None
 
-        self.version_name_frame = ttk.Frame(self)
-        self.version_name_text = ttk.Label(self.version_name_frame, anchor=CENTER)
+        self.version_name_frame = Frame(self)
+        self.version_name_text = Label(self.version_name_frame, anchor=CENTER)
         self.version_name_MOTD = MOTD(self.version_name_frame)
-        self.minecraft_version = ttk.Label(self, anchor=CENTER)
-        self.protocol_version = ttk.Label(self, anchor=CENTER)
-        self.major_name = ttk.Label(self, anchor=CENTER)
-        self.version_type = ttk.Label(self, anchor=CENTER)
+        self.minecraft_version = Label(self, anchor=CENTER)
+        self.protocol_version = Label(self, anchor=CENTER)
+        self.major_name = Label(self, anchor=CENTER)
+        self.version_type = Label(self, anchor=CENTER)
 
         self.bind_tip()
         self.pack_widgets()
@@ -245,16 +246,16 @@ class VersionInfo(ttk.Frame, Infer):
             self.version_type.configure(text=f"版本类型(未检测)：{data.version_type}")
 
 
-class ModInfo(ttk.Frame, Infer):
+class ModInfo(Frame, Infer):
     """模组信息组件"""
 
     def __init__(self, master: Misc):
         super(ModInfo, self).__init__(master)
 
         self.data = None
-        self.mod_pack_info = ttk.Label(self)
-        self.mod_list = ttk.Treeview(self, show=HEADINGS, columns=["mod", "version"])
-        self.mod_info = ttk.Frame(self)
+        self.mod_pack_info = Label(self)
+        self.mod_list = Treeview(self, show=HEADINGS, columns=["mod", "version"])
+        self.mod_info = Frame(self)
 
         self.pack_widgets()
 
@@ -276,7 +277,7 @@ class ModInfo(ttk.Frame, Infer):
         for mod in data.mod_list.items():
             self.mod_list.insert("", END, values=mod)
 
-    def select_mod(self, event: tk.Event):
+    def select_mod(self, event: Event):
         item_id = self.identify(event.x, event.y)
         if item_id == "border":
             return

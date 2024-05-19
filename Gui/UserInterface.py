@@ -1,6 +1,8 @@
 # -*- coding: UTF-8 -*-
 from tkinter import font
 
+from ttkbootstrap import Window
+
 from Gui.Widgets import *
 
 
@@ -20,7 +22,7 @@ def load_unifont():
     add_file("assets/Unifont.otf")
 
 
-class GUI(ttk.Window):
+class GUI(Window):
     def __init__(self):
         super(GUI, self).__init__()
 
@@ -30,10 +32,10 @@ class GUI(ttk.Window):
         self.config_root_window()
 
         self.title_bar = TitleBar(self)
-        self.sep = ttk.Separator()
+        self.sep = Separator()
         self.tabs = Tabs(self)
         self.logger = Logger(self.tabs)
-        self.server_scanF = ttk.Frame(self.tabs)
+        self.server_scanF = Frame(self.tabs)
         self.servers = ServerList(self.server_scanF, self.logger)
         self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers)
 

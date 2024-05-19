@@ -7,7 +7,8 @@ def main():
 
 
 if __name__ == '__main__':
-    import os
+    from os import chdir
+    from os.path import dirname, abspath
 
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    chdir(dirname(abspath(__file__)))
     main()
