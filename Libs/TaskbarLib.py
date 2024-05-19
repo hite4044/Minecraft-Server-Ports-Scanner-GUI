@@ -1,12 +1,7 @@
 # -*- coding: UTF-8 -*-
 from enum import Enum
 
-import comtypes.client as cc
 from win32gui import FlashWindowEx
-
-cc.GetModule(r"assets\TaskbarLib.tlb")
-
-from comtypes.gen import TaskbarLib
 
 
 class FLASHW(Enum):
@@ -28,8 +23,12 @@ class TBPFLAG(Enum):
 
 class TaskbarApi:
     def __init__(self, hwnd: int):
+        from comtypes.client import CreateObject, GetModule
+        GetModule(r"assets\TaskbarLib.tlb")
+        from comtypes.gen import TaskbarLib
+
         self.hwnd = hwnd
-        self.taskbar = cc.CreateObject(
+        self.taskbar = CreateObject(
             "{56FDF344-FD6D-11d0-958A-006097C9A090}",
             interface=TaskbarLib.ITaskbarList3)
         self.taskbar.ActivateTab(hwnd)
