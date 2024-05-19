@@ -649,7 +649,7 @@ class RecordBar(ttk.Frame):
                                         filetypes=[("Server Scan Record", "*.scrd"),
                                                    ("JSON", "*.json"),
                                                    ("All Files", "*.*")])
-        if fp == "":
+        if not fp:
             return
         try:
             # 读取数据
@@ -665,12 +665,14 @@ class RecordBar(ttk.Frame):
             # 询问加载方式
             Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
             ret = MessageBox(self.winfo_id(), "怎样加载扫描记录?", "加载方式 ⠀", MB_YESNOCANCEL | MB_ICONQUESTION)
-            if ret == IDYES:
-                pass
+            # FIXME: 原先代码中直接 pass ，是否为 WIP 内容？
+            # if ret == IDYES:
+            #     pass
+            # elif ret == IDECANCEL:
+            if ret == IDCANCEL:
+                return
             elif ret == IDNO:
                 self.server_list.delete_all_servers()
-            elif ret == IDCANCEL:
-                return
 
             # 加载服务器记录
             for server_obj_bytes in data["servers"]:
@@ -680,6 +682,9 @@ class RecordBar(ttk.Frame):
                     self.server_list.add_server(server_info)
                 except KeyError:
                     MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    return
+                except ModuleNotFoundError:
+                    MessageBox(self.winfo_id(), "不接受旧版本 scrd 文件", "扫描记录加载错误", MB_OK | MB_ICONERROR)
                     return
             # 加载配置
             config = data.get("configs")
