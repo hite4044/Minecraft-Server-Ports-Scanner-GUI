@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import json
 from os import mkdir
-from typing import List, Dict, Any
+from typing import List, Dict
 from win32print import GetDeviceCaps
 from win32api import GetSystemMetrics
 from win32gui import GetDC, ReleaseDC
@@ -87,25 +87,26 @@ color_map_hex: Dict[str, str] = {
 # 加载协议映射表
 protocol_map: List[Dict[str, str]] = []
 try:
-    with open(path_join("assets", "protocol_map.json"), "r") as f:
-        protocol_map = json.load(f)
+    with open(path_join("assets", "protocol_map.json"), "r") as file:
+        protocol_map = json.load(file)
 except FileNotFoundError:
     print("protocol_map.json 文件不存在")
 
 # 需要扫描的服务器地址列表
 server_addresses: List[str] = default_server_hosts.copy()
 
+# 设置
+config_dir = "config"
+if not exists(path_join(config_dir)):
+    mkdir(path_join(config_dir))
+
 
 class UserAddressOperator:
     # 拼接json路径
-    user_address_json = path_join("config", "user_address_record.json")
+    user_address_json = path_join(config_dir, "user_address_record.json")
 
     def __init__(self) -> None:
         """需要扫描的服务器地址操作器"""
-        # 创建config文件夹
-        if not exists(path_join("config")):
-            mkdir(path_join("config"))
-
         # 创建user_address_record.json文件
         if isfile(self.user_address_json) is False:
             with open(self.user_address_json, "w+", encoding="utf-8") as wfp:

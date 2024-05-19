@@ -10,11 +10,15 @@ from widgets import *
 
 
 class Infer:
+    """一个信息组件，必须含有load_data方法"""
+
     def load_data(self, data: ServerInfo):
         pass
 
 
 class InfoWindow(ttk.Toplevel, Infer):
+    """信息主窗口"""
+
     def __init__(self, master: Misc, data: ServerInfo):
         super(InfoWindow, self).__init__(master=master)
         self.favicon_image = None
@@ -90,6 +94,8 @@ class InfoWindow(ttk.Toplevel, Infer):
 
 
 class PlayersInfo(ttk.Frame, Infer):
+    """玩家信息组件"""
+
     def __init__(self, master: Misc):
         super(PlayersInfo, self).__init__(master)
 
@@ -97,7 +103,7 @@ class PlayersInfo(ttk.Frame, Infer):
         self.motion_id = None
         self.text = ttk.Label(self, anchor=CENTER)
         self.player_list = tk.Listbox(self, width=15)
-        self.tip = ToolTip(self.player_list, "在这个服务器里我们找不到人 :-(", delay=0, alpha=0.8)  # 怎么 homo 厨无处不在 恼
+        self.tip = ToolTip(self.player_list, "在这个服务器里我们找不到人 :-(", delay=0, alpha=0.8)
         self.text.pack(side=TOP, fill=X)
         self.player_list.pack(side=LEFT, fill=BOTH, expand=True)
         self.data = None
@@ -123,7 +129,6 @@ class PlayersInfo(ttk.Frame, Infer):
         item = self.player_list.nearest(event.y)
         if item == -1:
             return
-        print("Build ToolTip")
         self.tip.show_tip()
         uuid = self.data.players[item]['id']
         self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + uuid)
@@ -132,8 +137,6 @@ class PlayersInfo(ttk.Frame, Infer):
         self.motion_id = self.player_list.bind("<Motion>", self.update_tip, "+")
 
     def leave(self, _):
-        print("Hide ToolTip")
-        # self.tip.hide_tip()
         self.player_list.unbind("<Motion>", self.motion_id)
         self.player_list.bind("<Motion>", self.tip.move_tip)
         self.player_list.unbind("<Leave>", self.leave_id)
@@ -144,12 +147,13 @@ class PlayersInfo(ttk.Frame, Infer):
             item = self.player_list.nearest(event.y)
             if item == -1 or item == self.now_item:
                 return
-            print("Update ToolTip")
             self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.data.players[item]['id'])
             self.now_item = item
 
 
 class BaseInfo(ttk.Frame, Infer):
+    """服务器基本信息组件"""
+
     def __init__(self, master: Misc):
         super(BaseInfo, self).__init__(master)
         self.data = None
@@ -180,6 +184,8 @@ class BaseInfo(ttk.Frame, Infer):
 
 
 class VersionInfo(ttk.Frame, Infer):
+    """版本信息组件"""
+
     def __init__(self, master: Misc):
         super(VersionInfo, self).__init__(master)
         self.data = None
@@ -238,6 +244,8 @@ class VersionInfo(ttk.Frame, Infer):
 
 
 class ModInfo(ttk.Frame, Infer):
+    """模组信息组件"""
+
     def __init__(self, master: Misc):
         super(ModInfo, self).__init__(master)
 

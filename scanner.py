@@ -1,16 +1,18 @@
 # -*- coding: UTF-8 -*-
-import vars
-from time import sleep
-from io import BytesIO
-from copy import deepcopy
-from typing import List, Any
 from base64 import b64decode
-from PIL import Image, ImageTk
+from copy import deepcopy
+from io import BytesIO
 from queue import Queue, Empty
 from threading import Thread, Lock
+from time import sleep
+from typing import List, Any
+
+from PIL import Image, ImageTk
 from mcstatus.address import Address
 from mcstatus.pinger import ServerPinger
 from mcstatus.protocol.connection import TCPSocketConnection
+
+import vars
 
 
 class ServerScanner:
@@ -74,9 +76,9 @@ class ServerScanner:
             sleep(0.1)
 
     def stop(self):
+        self.in_scan = False
         if self.pause_lock.locked():
             self.pause_lock.release()
-        self.in_scan = False
 
     def stop_and_wait(self):
         self.stop()
