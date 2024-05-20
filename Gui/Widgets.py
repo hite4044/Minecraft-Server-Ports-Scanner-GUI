@@ -220,8 +220,8 @@ class RangeScale(Canvas):
         self.range_color = Color(Style().colors.light).set_brightness(1.5).hex  # 范围条的颜色
         self.min_handle_base_color = Style().colors.primary  # 小值滑块基础颜色
         self.max_handle_base_color = Color(Style().colors.primary).reverse().hex  # 大值滑块基础颜色
-        self.min_handle_color = copy(self.min_handle_base_color)  # 小值滑块颜色
-        self.max_handle_color = copy(self.max_handle_base_color)  # 大值滑块颜色
+        self.min_handle_color = self.min_handle_base_color[:]  # 小值滑块颜色
+        self.max_handle_color = self.max_handle_base_color[:]  # 大值滑块颜色
 
         self.color_change()
 
@@ -310,12 +310,12 @@ class RangeScale(Canvas):
         if self.min_highlight:
             self.min_handle_color = Color(self.min_handle_base_color).set_brightness(1.1).hex
         else:
-            self.min_handle_color = copy(self.min_handle_base_color)
+            self.min_handle_color = self.min_handle_base_color[:]
 
         if self.max_highlight:
             self.max_handle_color = Color(self.max_handle_base_color).set_brightness(1.1).hex
         else:
-            self.max_handle_color = copy(self.max_handle_base_color)
+            self.max_handle_color = self.max_handle_base_color[:]
         self.redraw()
 
     def mouse_down(self, *_):
