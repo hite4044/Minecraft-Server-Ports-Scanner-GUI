@@ -1,13 +1,15 @@
 # -*- coding: UTF-8 -*-
 
 def main():
-    from main_gui import GUI
+    from Gui.UserInterface import GUI
+
     root = GUI()
     root.mainloop()
 
 
 if __name__ == '__main__':
-    import os
+    from os import chdir
+    from os.path import dirname, abspath
 
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    chdir(dirname(abspath(__file__)))
     main()

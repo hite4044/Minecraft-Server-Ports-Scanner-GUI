@@ -1,16 +1,14 @@
 # -*- coding: UTF-8 -*-
-import vars
-from time import sleep
-from io import BytesIO
-from copy import deepcopy
-from typing import List, Any
 from base64 import b64decode
-from PIL import Image, ImageTk
+from copy import deepcopy
+from io import BytesIO
 from queue import Queue, Empty
 from threading import Thread, Lock
-from mcstatus.address import Address
-from mcstatus.pinger import ServerPinger
-from mcstatus.protocol.connection import TCPSocketConnection
+from time import sleep
+from typing import List, Any
+
+from PIL import Image, ImageTk
+from Libs import Vars
 
 
 class ServerScanner:
@@ -149,6 +147,10 @@ class Port:
         获取服务器在`#Status_Response`包中的返回JSON
         https://wiki.vg/Server_List_Ping#Status_Response
         """
+        from mcstatus.address import Address
+        from mcstatus.pinger import ServerPinger
+        from mcstatus.protocol.connection import TCPSocketConnection
+
         info = {"host": self.host, "port": self.port}
         try:
             with TCPSocketConnection((self.host, self.port), self.timeout) as connection:
@@ -199,7 +201,7 @@ class ServerInfo:
         if self.protocol_version == -1:
             self.protocol_info = {}
         else:
-            for ver in vars.protocol_map:
+            for ver in Vars.protocol_map:
                 if ver["version"] == self.protocol_version:
                     self.protocol_info: dict = ver
                     break
@@ -313,8 +315,8 @@ class DescriptionParser:
                     state["obfuscated"] = True
                 elif fmt_code == "r":  # 重置样式
                     pass
-                elif fmt_code in vars.color_map.keys():  # 颜色
-                    state["color"] = vars.color_map[fmt_code]
+                elif fmt_code in Vars.color_map.keys():  # 颜色
+                    state["color"] = Vars.color_map[fmt_code]
                 extras.append(state)
             else:
                 pass

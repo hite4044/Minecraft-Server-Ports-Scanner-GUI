@@ -86,17 +86,18 @@ color_map_hex: Dict[str, str] = {
 
 # 加载协议映射表
 protocol_map: List[Dict[str, str]] = []
-try:
-    with open(path_join("assets", "protocol_map.json"), "r") as file:
+json_file_path = path_join("assets", "protocol_map.json")
+if exists(json_file_path):
+    with open(json_file_path, "r") as file:
         protocol_map = json.load(file)
-except FileNotFoundError:
+else:
     print("protocol_map.json 文件不存在")
 
 # 需要扫描的服务器地址列表
 server_addresses: List[str] = default_server_hosts.copy()
 
 # 设置
-config_dir = "config"
+config_dir = "../config"
 if not exists(path_join(config_dir)):
     mkdir(path_join(config_dir))
 
