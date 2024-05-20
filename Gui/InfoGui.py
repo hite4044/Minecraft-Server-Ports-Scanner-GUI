@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
-from PIL.ImageTk import PhotoImage
 from tkinter import Listbox
+
+from PIL.ImageTk import PhotoImage
 from ttkbootstrap.tooltip import ToolTip
 from win32con import MB_ICONINFORMATION
 

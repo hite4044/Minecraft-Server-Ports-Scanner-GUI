@@ -2,13 +2,15 @@
 import json
 from os import mkdir
 from typing import List, Dict
-from win32print import GetDeviceCaps
-from win32api import GetSystemMetrics
-from win32gui import GetDC, ReleaseDC
-from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from os.path import join as path_join, isfile, exists
 
+from win32con import SM_CXSCREEN, DESKTOPHORZRES
+from win32api import GetSystemMetrics
+from win32gui import GetDC, ReleaseDC
+from win32print import GetDeviceCaps
+
 # 默认域名
+# noinspection SpellCheckingInspection
 default_server_hosts: List[str] = [
     "s2.wemc.cc",
     "m6.ctymc.cn",
@@ -84,6 +86,7 @@ color_map_hex: Dict[str, str] = {
     "white": "#FFFFFF",
 }
 
+
 # 加载协议映射表
 protocol_map: List[Dict[str, str]] = []
 json_file_path = path_join("assets", "protocol_map.json")
@@ -96,6 +99,12 @@ else:
 # 需要扫描的服务器地址列表
 server_addresses: List[str] = default_server_hosts.copy()
 
+# 日志等级
+DEBUG = "debug"
+INFO = "info"
+WARNING = "warning"
+ERROR = "error"
+
 # 设置
 config_dir = "../config"
 if not exists(path_join(config_dir)):
@@ -103,7 +112,7 @@ if not exists(path_join(config_dir)):
 
 
 class UserAddressOperator:
-    # 拼接json路径
+    """用户扫描地址记录操作器"""
     user_address_json = path_join(config_dir, "user_address_record.json")
 
     def __init__(self) -> None:

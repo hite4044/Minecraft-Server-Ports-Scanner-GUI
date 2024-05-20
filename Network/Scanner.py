@@ -1,14 +1,31 @@
 # -*- coding: UTF-8 -*-
-from base64 import b64decode
-from copy import deepcopy
+from Libs import Vars
 from io import BytesIO
+from time import sleep
+from copy import deepcopy
+from base64 import b64decode
+from typing import List, Any
+from PIL import Image, ImageTk
 from queue import Queue, Empty
 from threading import Thread, Lock
-from time import sleep
-from typing import List, Any
 
-from PIL import Image, ImageTk
-from Libs import Vars
+
+ServerPinger: Any = None
+Address: Any = None
+TCPSocketConnection: Any = None
+
+
+def import_mcstatus():
+    global ServerPinger, Address, TCPSocketConnection
+    from mcstatus.address import Address as Address_
+    from mcstatus.pinger import ServerPinger as ServerPinger_
+    from mcstatus.protocol.connection import TCPSocketConnection as TCPSocketConnection_
+    ServerPinger = ServerPinger_
+    Address = Address_
+    TCPSocketConnection = TCPSocketConnection_
+
+
+Thread(target=import_mcstatus).start()
 
 
 class ServerScanner:
@@ -122,14 +139,15 @@ class ServerScanner:
         with self.thread_num_lock:
             self.worker_count -= 1
             self.working_worker -= 1
-        if self.worker_count <= 0:
-            Thread(target=self.check_callback_over_thread, daemon=True).start()
+            if self.worker_count <= 0:
+                Thread(target=self.check_callback_over_thread, daemon=True).start()
 
     def check_callback_over_thread(self):
-        while self.callback_count > 0:
+        while self.callback_count > 0 and self.in_scan:
             sleep(0.05)
-        sleep(0.2)
-        self.in_scan = False
+        if self.in_scan:
+            sleep(0.2)
+            self.in_scan = False
 
 
 class Port:
@@ -147,9 +165,6 @@ class Port:
         获取服务器在`#Status_Response`包中的返回JSON
         https://wiki.vg/Server_List_Ping#Status_Response
         """
-        from mcstatus.address import Address
-        from mcstatus.pinger import ServerPinger
-        from mcstatus.protocol.connection import TCPSocketConnection
 
         info = {"host": self.host, "port": self.port}
         try:

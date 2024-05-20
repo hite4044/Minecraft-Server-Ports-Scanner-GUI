@@ -1,8 +1,10 @@
 # -*- coding: UTF-8 -*-
-from tkinter import font
+from sys import stderr
+from os.path import exists
+from time import perf_counter
 
-from ttkbootstrap import Window
-
+from Gui.ServerListGui import ServerList
+from Gui.ScanBarGui import ScanBar
 from Gui.Widgets import *
 
 
@@ -20,6 +22,22 @@ def load_unifont():
 
     options['win32_gdi_font'] = True
     add_file("assets/Unifont.otf")
+
+
+class Title(Label):
+    def __init__(self, master: Misc):
+        super(Title, self).__init__(master)
+        self.configure(text="Minecraft服务器扫描器")
+        self.configure(font=("微软雅黑", 24))
+
+
+class TitleBar(Frame):
+    def __init__(self, master: Misc):
+        super(TitleBar, self).__init__(master)
+        self.title_text = Title(self)
+        self.theme_selector = ThemesSelector(self)
+        self.title_text.pack(side=LEFT, padx=5, pady=5)
+        self.theme_selector.pack(side=RIGHT, padx=5, pady=5)
 
 
 class GUI(Window):
