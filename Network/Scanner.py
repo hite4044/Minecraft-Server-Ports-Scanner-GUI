@@ -152,7 +152,6 @@ class ServerScanner:
 
 class Port:
     """获取服务器JSON数据"""
-
     def __init__(self, host: str = "", port: int = 25565, timeout: float = 0.7, protocol_version: int = 47):
         self.sock = None
         self.host = host

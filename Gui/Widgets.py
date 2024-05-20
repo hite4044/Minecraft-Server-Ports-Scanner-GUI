@@ -10,6 +10,7 @@ from threading import Lock, Thread
 from ttkbootstrap.constants import *
 from pyperclip import copy as copy_clipboard
 from time import strftime, localtime, time, sleep
+from copy import copy
 
 from Libs.Vars import scale_rater, color_map_hex
 from Network.Scanner import ServerInfo
@@ -152,7 +153,7 @@ class TextCombobox(Frame):
         super(TextCombobox, self).__init__(master)
 
         self.text = Label(self, text=tip)
-        self.combobox = Combobox(self, values=value)
+        self.combobox = Combobox(self, values=value, cursor="xterm")
 
         if len(value) > 0:
             self.combobox.current(0)
@@ -295,18 +296,19 @@ class RangeScale(Canvas):
         if self.min_highlight:
             self.min_handle_color = Color(self.min_handle_base_color).set_brightness(1.1).hex
         else:
-            self.min_handle_color = self.min_handle_base_color[:]
+            self.min_handle_color = copy(self.min_handle_base_color)
 
         if self.max_highlight:
             self.max_handle_color = Color(self.max_handle_base_color).set_brightness(1.1).hex
         else:
-            self.max_handle_color = self.max_handle_base_color[:]
+            self.max_handle_color = copy(self.max_handle_base_color)
         self.redraw()
 
     def mouse_down(self, *_):
         if self.max_highlight:
             self.bind_max_handle = True
-        elif self.min_highlight:
+            return
+        if self.min_highlight:
             self.bind_min_handle = True
 
     def mouse_up(self, *_):
@@ -653,6 +655,11 @@ class Logger(Frame):
         self.list_box.configure(selectmode=BROWSE)
         self.list_box.bind("<Button-3>", self.on_menu)
         self.list_box.pack(fill=BOTH, expand=True)
+        def o():
+            for i in range(2000):
+                self.log(INFO, "日志系统已启动")
+                sleep(0.1)
+        Thread(target=o, daemon=True).start()
 
     def set_log_count(self):
         self.log_count_label.configure(text=f"日志数量: {self.log_count}")
@@ -678,7 +685,7 @@ class Logger(Frame):
         self.set_log_count()
 
         y_view = [round(i, 1) for i in self.list_box.yview()]
-        if y_view[1] == 1.0 or (all(i == 0.0 for i in y_view)):
+        if y_view[1] == 1.0 or (all(i == 0.0 for i in y_view)) or y_view[0] == y_view[1]:
             self.list_box.yview_moveto(1.0)
         if self.log_lock.locked():
             self.log_lock.release()

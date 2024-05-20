@@ -1,9 +1,9 @@
 # -*- coding: UTF-8 -*-
 from tkinter import Listbox
-
+from win32gui import MessageBox
 from PIL.ImageTk import PhotoImage
 from ttkbootstrap.tooltip import ToolTip
-from win32con import MB_ICONINFORMATION
+from win32con import MB_ICONINFORMATION, MB_OK
 
 from Gui.Widgets import *
 from Network.Scanner import DescriptionParser, Port, ServerInfo
