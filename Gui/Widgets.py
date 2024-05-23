@@ -655,11 +655,6 @@ class Logger(Frame):
         self.list_box.configure(selectmode=BROWSE)
         self.list_box.bind("<Button-3>", self.on_menu)
         self.list_box.pack(fill=BOTH, expand=True)
-        def o():
-            for i in range(2000):
-                self.log(INFO, "日志系统已启动")
-                sleep(0.1)
-        Thread(target=o, daemon=True).start()
 
     def set_log_count(self):
         self.log_count_label.configure(text=f"日志数量: {self.log_count}")
