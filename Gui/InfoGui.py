@@ -1,9 +1,10 @@
 # -*- coding: UTF-8 -*-
 from tkinter import Listbox
-from win32gui import MessageBox
+
 from PIL.ImageTk import PhotoImage
 from ttkbootstrap.tooltip import ToolTip
 from win32con import MB_ICONINFORMATION, MB_OK
+from win32gui import MessageBox
 
 from Gui.Widgets import *
 from Network.Scanner import DescriptionParser, Port, ServerInfo
@@ -23,8 +24,6 @@ class InfoWindow(Toplevel, Infer):
         from Gui.Widgets import MOTD, Tabs
 
         super(InfoWindow, self).__init__(master=master)
-        self.favicon_image = None
-        self.default_favicon = None
         self.data = data
         self.load_window_title()
         self.wm_resizable(True, True)
@@ -42,22 +41,18 @@ class InfoWindow(Toplevel, Infer):
         self.load_data(data)
         self.pack_widgets()
 
-    # FIXME: 这是为什么？没人碰了他！
+    # FIXME: 无法正常显示 server_icon.png
     def load_data(self, data: ServerInfo):
-        self.data = data
-        if data.has_favicon:
-            self.favicon_image = self.data.favicon
-        else:
-            self.favicon_image = Image.open(r"assets\server_icon.png")
-        self.favicon_image = self.favicon_image.resize((128, 128))
-        self.default_favicon = PhotoImage(self.favicon_image)
-        self.favicon.configure(image=self.default_favicon)
+        favicon = self.data.favicon_photo if data.has_favicon \
+            else PhotoImage(file=r"assets\server_icon.png")
+        self.favicon.configure(image=favicon)
+        self.favicon.update()
+        self.load_icon(favicon)
 
+        self.data = data
         self.MOTD.load_motd(self.data)
         self.base_info.load_data(self.data)
         self.version_info.load_data(self.data)
-
-        self.load_icon()
 
     def reget_info(self):
         server_status = Port(self.data.host, self.data.port).get_server_info()
@@ -74,8 +69,13 @@ class InfoWindow(Toplevel, Infer):
         elif server_status["status"] == "online":
             self.load_data(ServerInfo(server_status["info"]))
 
-    def load_icon(self):
-        self.iconphoto(False, self.default_favicon)
+    def load_icon(self, favicon: PhotoImage):
+        """
+        将一个 PIL.ImageTK.PhotoImage 加载为 GUI 图标
+
+        @param favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
+        """
+        self.iconphoto(False, favicon)
 
     def pack_widgets(self):
         self.favicon.pack_configure()
