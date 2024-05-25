@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 from tkinter import Listbox
 
-from PIL.ImageTk import PhotoImage
 from ttkbootstrap.tooltip import ToolTip
 from win32con import MB_ICONINFORMATION, MB_OK
 from win32gui import MessageBox
@@ -41,12 +40,12 @@ class InfoWindow(Toplevel, Infer):
         self.load_data(data)
         self.pack_widgets()
 
-    # FIXME: 无法正常显示 server_icon.png
     def load_data(self, data: ServerInfo):
         favicon = self.data.favicon_photo if data.has_favicon \
-            else PhotoImage(file=r"assets\server_icon.png")
+            else ImageTk.PhotoImage(file=r"assets\server_icon.png")
         self.favicon.configure(image=favicon)
-        self.favicon.update()
+        # 将 favicon 引用传递给 self.favicon.image, 使其变成 self.favicon 的属性, 防止其被 gc 回收
+        self.favicon.image = favicon
         self.load_icon(favicon)
 
         self.data = data
