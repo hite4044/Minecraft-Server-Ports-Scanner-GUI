@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
+from os.path import abspath
 from tkinter import Listbox
 from win32gui import MessageBox
-from PIL.ImageTk import PhotoImage
 from ttkbootstrap.tooltip import ToolTip
 from win32con import MB_ICONINFORMATION, MB_OK
 
@@ -20,8 +20,6 @@ class InfoWindow(Toplevel, Infer):
     """信息主窗口"""
 
     def __init__(self, master: Misc, data: ServerInfo):
-        from Gui.Widgets import MOTD, Tabs
-
         super(InfoWindow, self).__init__(master=master)
         self.favicon_image = None
         self.default_favicon = None
@@ -48,9 +46,9 @@ class InfoWindow(Toplevel, Infer):
         if data.has_favicon:
             self.favicon_image = self.data.favicon
         else:
-            self.favicon_image = Image.open(r"assets\server_icon.png")
+            self.favicon_image = Image.open(abspath(r"assets\server_icon.png"))
         self.favicon_image = self.favicon_image.resize((128, 128))
-        self.default_favicon = PhotoImage(self.favicon_image)
+        self.default_favicon = ImageTk.PhotoImage(self.favicon_image)
         self.favicon.configure(image=self.default_favicon)
 
         self.MOTD.load_motd(self.data)

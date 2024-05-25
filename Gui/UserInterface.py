@@ -6,6 +6,7 @@ from time import perf_counter
 from Gui.ServerListGui import ServerList
 from Gui.ScanBarGui import ScanBar
 from Gui.Widgets import *
+from Libs.Vars import *
 
 
 def set_default_font():
@@ -61,9 +62,25 @@ class GUI(Window):
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
         Thread(target=load_unifont).start()  # 加载字体
 
+    @staticmethod
+    def load_user_theme():
+        config_path = path_join(config_dir, "theme_config.json")
+        if exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                data = json_load(f)
+                Style().theme_use(data["theme_name"])
+        else:
+            Style().theme_use("darkly")
+
+    @staticmethod
+    def save_user_theme():
+        config_path = path_join(config_dir, "theme_config.json")
+        with open(config_path, "w+", encoding="utf-8") as f:
+            json_dump({"theme_name": Style().theme_use()}, f, indent=4)
+
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
-        self.style.theme_use("solar")
+        self.load_user_theme()
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
         Thread(target=self.set_icon).start()
         Thread(target=self.place_window_center).start()
@@ -76,6 +93,7 @@ class GUI(Window):
 
     def on_delete_window(self):
         self.scan_bar.close_save_config()
+        self.save_user_theme()
         self.destroy()
 
     def pack_widgets(self):

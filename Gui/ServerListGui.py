@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from copy import copy
 from typing import Dict
 from pyperclip import copy
 from re import match, error
@@ -80,7 +79,8 @@ class ServerFilter(Frame):
         return ServersFilter(version, enable_re)
 
     def filtration(self, *_):
-        self.master.__dict__["reload_server"](self.get_filter())
+        # noinspection PyUnresolvedReferences
+        self.master.reload_server(self.get_filter())
 
 
 class ServerCounter(Label):
@@ -117,6 +117,8 @@ class RecordBar(Frame):
         self.save_button.pack_configure(side=RIGHT)
 
     def load_record(self):
+        # noinspection PyUnresolvedReferences
+        scanbar = self.master.master.master.master.scan_bar
         fp = filedialog.askopenfilename(title="选择扫描记录文件",
                                         filetypes=[("Server Scan Record", "*.scrd"),
                                                    ("JSON", "*.json"),
@@ -127,12 +129,13 @@ class RecordBar(Frame):
             # 读取数据
             with open(fp, "r", encoding="utf-8") as f:
                 data = json_load(f)
-            if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
-                if not isinstance(data, list):
-                    MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误",
-                               MB_OK | MB_ICONERROR)
-                    return
+            if isinstance(data, list):  # 旧版支持
                 data = {"servers": data}
+            elif not isinstance(data, dict):
+                MessageBox(self.winfo_id(),
+                           "无法解析文件内容，请检查文件格式", "扫描记录加载错误",
+                           MB_OK | MB_ICONERROR)
+                return
 
             # 询问加载方式
             Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
@@ -151,9 +154,7 @@ class RecordBar(Frame):
                 except KeyError:
                     MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
                     return
-                except ModuleNotFoundError:
-                    MessageBox(self.winfo_id(), "不接受旧版本 scrd 文件", "扫描记录加载错误", MB_OK | MB_ICONERROR)
-                    return
+
             # 加载配置
             config = data.get("configs")
             if config:
@@ -164,6 +165,8 @@ class RecordBar(Frame):
             MessageBox(self.winfo_id(), "文件内容解码错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
 
     def save_record(self):
+        # noinspection PyUnresolvedReferences
+        scanbar = self.master.master.scan_bar
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
                                           title="选择扫描记录文件",
                                           defaultextension=".scrd",
