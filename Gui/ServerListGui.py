@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import sys
 from base64 import b64decode, b64encode
 from json import load as json_load, JSONDecodeError, dump as json_dump
 from pickle import loads as pickle_loads, dumps as pickle_dumps
@@ -157,6 +158,13 @@ class RecordBar(Frame):
                 except KeyError:
                     showerror("扫描记录加载错误", "数据加载错误", parent=self)
                     return
+                except ModuleNotFoundError:
+                    import Network.Scanner
+                    sys.modules['scanner'] = Network.Scanner
+                    server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                    server_info.load_favicon_photo()
+                    self.server_list.add_server(server_info)
+                    del sys.modules['scanner']
 
             # 加载配置
             config = data.get("configs")

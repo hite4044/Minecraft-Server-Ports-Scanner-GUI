@@ -1,12 +1,11 @@
 # -*- coding: UTF-8 -*-
 import json
 from os import mkdir
-from typing import List, Dict
 from os.path import join as path_join, isfile, exists
-from json import dump as json_dump, load as json_load
+from typing import List, Dict
 
-from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32api import GetSystemMetrics
+from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32gui import GetDC, ReleaseDC
 from win32print import GetDeviceCaps
 
@@ -86,7 +85,6 @@ color_map_hex: Dict[str, str] = {
     "yellow": "#FFFF55",
     "white": "#FFFFFF",
 }
-
 
 # 加载协议映射表
 protocol_map: List[Dict[str, str]] = []
@@ -176,6 +174,7 @@ class ScaleRater:
     因为窗口创建后计算值不在准确
     所以仅在窗口创建前获取一次值
     """
+
     def __init__(self):
         self.scale_rate: float = 1.0
         self.update_scale_rate()
