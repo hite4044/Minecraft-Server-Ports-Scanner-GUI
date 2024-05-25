@@ -1,18 +1,17 @@
 # -*- coding: UTF-8 -*-
-from json import load as json_load, dump as json_dump
+from ping3 import ping
 from sys import stderr
 from time import perf_counter
-
 from comtypes import CoInitialize, CoUninitialize
-from ping3 import ping
-from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
+from json import load as json_load, dump as json_dump
 from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
+from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
 
 from Gui.ServerListGui import ServerList
-from Gui.Widgets import *
 from Libs.TaskbarLib import *
-from Libs.Vars import *
 from Network.Scanner import *
+from Gui.Widgets import *
+from Libs.Vars import *
 
 
 class ScanBar(LabelFrame):

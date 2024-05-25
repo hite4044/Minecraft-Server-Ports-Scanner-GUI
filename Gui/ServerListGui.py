@@ -370,11 +370,15 @@ class ServerFrame(Frame):
                 return
         self.info_window: InfoWindow = InfoWindow(self, self.data)
 
-    def load_motd_text(self):
-        text = str()
-        for extra in self.data.description_json:
-            text += extra["text"]
-        return text
+    def load_motd_text(self) -> str:
+        """
+        将一串 MOTD 信息转换为纯文本
+
+        Returns:
+            str: 连接后的 MOTD 文本字符串。
+        """
+        text_list = [extra["text"] for extra in self.data.description_json]
+        return ''.join(text_list)
 
     def pop_menu(self, event: Event):
         menu = Menu()
