@@ -3,6 +3,7 @@ import json
 from os import mkdir
 from typing import List, Dict
 from os.path import join as path_join, isfile, exists
+from json import dump as json_dump, load as json_load
 
 from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32api import GetSystemMetrics
@@ -106,7 +107,7 @@ WARNING = "warning"
 ERROR = "error"
 
 # 设置
-config_dir = "../config"
+config_dir = "./config"
 if not exists(path_join(config_dir)):
     mkdir(path_join(config_dir))
 

@@ -4,8 +4,7 @@ from json import load as json_load, JSONDecodeError, dump as json_dump
 from pickle import loads as pickle_loads, dumps as pickle_dumps
 from re import match, error
 from tkinter import filedialog
-from tkinter.messagebox import askyesnocancel
-from tkinter.messagebox import showerror
+from tkinter.messagebox import askyesnocancel, showerror
 from typing import Dict
 
 from pyperclip import copy
@@ -80,7 +79,8 @@ class ServerFilter(Frame):
         return ServersFilter(version, enable_re)
 
     def filtration(self, *_):
-        self.master.__dict__["reload_server"](self.get_filter())
+        # noinspection PyUnresolvedReferences
+        self.master.reload_server(self.get_filter())
 
 
 class ServerCounter(Label):
@@ -117,6 +117,8 @@ class RecordBar(Frame):
         self.save_button.pack_configure(side=RIGHT)
 
     def load_record(self):
+        # noinspection PyUnresolvedReferences
+        scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.askopenfilename(title="选择扫描记录文件",
                                         filetypes=[("Server Scan Record", "*.scrd"),
                                                    ("JSON", "*.json"),
@@ -127,6 +129,11 @@ class RecordBar(Frame):
             # 读取数据
             with open(fp, "r", encoding="utf-8") as f:
                 data = json_load(f)
+            if isinstance(data, list):  # 旧版支持
+                data = {"servers": data}
+            elif not isinstance(data, dict):
+                showerror("扫描记录加载错误", "无法解析文件内容，请检查文件格式", parent=self)
+                return
             if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
                 if not isinstance(data, list):
                     showerror("扫描记录加载错误", "无法解析文件内容，请检查文件格式", parent=self)
@@ -135,7 +142,7 @@ class RecordBar(Frame):
 
             # 询问加载方式
             Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
-            ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self, default="追加", cancel="覆盖")
+            ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self)
             if not ret:
                 return
             elif ret is None:
@@ -150,19 +157,19 @@ class RecordBar(Frame):
                 except KeyError:
                     showerror("扫描记录加载错误", "数据加载错误", parent=self)
                     return
-                except ModuleNotFoundError:
-                    showerror("扫描记录加载错误", "不接受旧版本 scrd 文件", parent=self)
-                    return
+
             # 加载配置
             config = data.get("configs")
             if config:
-                scanbar.set_config(config)
+                scan_bar.set_config(config)
         except JSONDecodeError:
             showerror("扫描记录加载错误", "非JSON文本", parent=self)
         except UnicodeDecodeError:
             showerror("扫描记录加载错误", "文件内容解码错误", parent=self)
 
     def save_record(self):
+        # noinspection PyUnresolvedReferences
+        scan_bar = self.master.master.scan_bar
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
                                           title="选择扫描记录文件",
                                           defaultextension=".scrd",
@@ -178,7 +185,7 @@ class RecordBar(Frame):
             copied_info: ServerInfo = copy(server_info)
             copied_info.favicon_photo = None
             servers.append(b64encode(pickle_dumps(copied_info)).decode("utf-8"))
-        data = {"servers": servers, "configs": scanbar.get_config()}
+        data = {"servers": servers, "configs": scan_bar.get_config()}
 
         with open(file=fp, mode="w+", encoding="utf-8") as f:
             json_dump(data, f)

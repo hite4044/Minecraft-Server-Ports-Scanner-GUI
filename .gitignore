@@ -160,3 +160,5 @@ cython_debug/
 .idea/
 /test.py
 /config/user_address_record.json
+/config/scan_config.json
+/config/theme_config.json

@@ -18,7 +18,6 @@ from Libs.ColorLib import Color
 
 ERROR = "error"
 DEBUG = "debug"
-scanbar: Any = None
 
 
 def get_now_time() -> str:

@@ -13,6 +13,8 @@ from Network.Scanner import *
 from Gui.Widgets import *
 from Libs.Vars import *
 
+scanbar: Any = None
+
 
 class ScanBar(LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
@@ -67,6 +69,8 @@ class ScanBar(LabelFrame):
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
         self.load_user_config()
+        global scanbar
+        scanbar = self
 
     def close_save_config(self):
         try:
