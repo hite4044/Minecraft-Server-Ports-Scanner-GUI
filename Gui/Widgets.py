@@ -28,6 +28,8 @@ class MOTD(Text):
     def __init__(self, master: Misc):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
+        self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
+
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
         try:

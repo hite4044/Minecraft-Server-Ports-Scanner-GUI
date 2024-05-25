@@ -13,7 +13,7 @@ from ttkbootstrap.scrolled import ScrolledFrame
 
 from Gui.InfoGui import InfoWindow
 from Gui.Widgets import *
-from Libs.WinLib import write_msg_window_buttons
+from Libs.WinLib import override_msg_window_buttons
 
 
 class ServersFilter:
@@ -142,7 +142,7 @@ class RecordBar(Frame):
                 data = {"servers": data}
 
             # 询问加载方式
-            Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
+            Thread(target=override_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
             ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self)
             # ret = None  取消
             # ret = False 覆盖

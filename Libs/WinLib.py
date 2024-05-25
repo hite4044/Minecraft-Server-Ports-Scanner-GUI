@@ -2,8 +2,14 @@ from win32gui import GetWindowText, SetWindowText, FindWindow, FindWindowEx, Get
 from time import time, sleep
 
 
-def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
-    """覆写某个窗口的按钮文字"""
+def override_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
+    """
+    覆写按钮文字
+
+    @param left: 左侧按钮目标文字
+    @param right: 右侧按钮目标文字
+    @param timeout: 超时时间 (s)
+    """
     def callback(hwnd: int, _):
         if GetWindowText(hwnd) == "是(&Y)":
             SetWindowText(hwnd, left)
@@ -22,4 +28,4 @@ def write_msg_window_buttons(left: str, right: str, timeout: float = 1.2):
         if GetParent(msg_win) != main_win:
             return
         EnumChildWindows(msg_win, callback, None)
-        break
+        return
