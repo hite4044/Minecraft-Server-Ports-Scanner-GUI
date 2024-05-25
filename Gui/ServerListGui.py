@@ -134,7 +134,7 @@ class RecordBar(Frame):
                 data = {"servers": data}
 
             # 询问加载方式
-            # Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
+            Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
             ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self, default="追加", cancel="覆盖")
             if not ret:
                 return
