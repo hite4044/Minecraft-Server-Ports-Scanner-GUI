@@ -1,9 +1,8 @@
 # -*- coding: UTF-8 -*-
 from tkinter import Listbox
+from tkinter.messagebox import showinfo
 
 from ttkbootstrap.tooltip import ToolTip
-from win32con import MB_ICONINFORMATION, MB_OK
-from win32gui import MessageBox
 
 from Gui.Widgets import *
 from Network.Scanner import DescriptionParser, Port, ServerInfo
@@ -56,15 +55,9 @@ class InfoWindow(Toplevel, Infer):
     def reget_info(self):
         server_status = Port(self.data.host, self.data.port).get_server_info()
         if server_status["status"] == "offline":
-            MessageBox(self.winfo_id(),
-                       "服务器已经死了，都是你害的辣 (doge",
-                       "服务器已离线",
-                       MB_OK | MB_ICONINFORMATION)
+            showinfo("服务器已经死了，都是你害的辣 (doge", "服务器已离线", parent=self)
         elif server_status["status"] == "error":
-            MessageBox(self.winfo_id(),
-                       "服务器有点问题：" + server_status["msg"],
-                       "服务器：?",
-                       MB_OK | MB_ICONINFORMATION)
+            showinfo("服务器有点问题：" + server_status["msg"], "服务器：?", parent=self)
         elif server_status["status"] == "online":
             self.load_data(ServerInfo(server_status["info"]))
 

@@ -1,19 +1,19 @@
 # -*- coding: UTF-8 -*-
-from copy import copy
-from typing import Dict
-from pyperclip import copy
+from base64 import b64decode, b64encode
+from json import load as json_load, JSONDecodeError, dump as json_dump
+from pickle import loads as pickle_loads, dumps as pickle_dumps
 from re import match, error
 from tkinter import filedialog
-from win32gui import MessageBox
-from base64 import b64decode, b64encode
-from ttkbootstrap.scrolled import ScrolledFrame
-from pickle import loads as pickle_loads, dumps as pickle_dumps
-from json import load as json_load, JSONDecodeError, dump as json_dump
-from win32con import MB_OK, MB_ICONERROR, MB_YESNOCANCEL, MB_ICONQUESTION, IDYES, IDNO, IDCANCEL, MB_ICONWARNING
+from tkinter.messagebox import askyesnocancel
+from tkinter.messagebox import showerror
+from typing import Dict
 
-from Libs.WinLib import write_msg_window_buttons
+from pyperclip import copy
+from ttkbootstrap.scrolled import ScrolledFrame
+
 from Gui.InfoGui import InfoWindow
 from Gui.Widgets import *
+from Libs.WinLib import write_msg_window_buttons
 
 
 class ServersFilter:
@@ -129,17 +129,16 @@ class RecordBar(Frame):
                 data = json_load(f)
             if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
                 if not isinstance(data, list):
-                    MessageBox(self.winfo_id(), "无法解析文件内容，请检查文件格式", "扫描记录加载错误",
-                               MB_OK | MB_ICONERROR)
+                    showerror("扫描记录加载错误", "无法解析文件内容，请检查文件格式", parent=self)
                     return
                 data = {"servers": data}
 
             # 询问加载方式
-            Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
-            ret = MessageBox(self.winfo_id(), "怎样加载扫描记录?", "加载方式 ⠀", MB_YESNOCANCEL | MB_ICONQUESTION)
-            if ret == IDCANCEL:
+            # Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
+            ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self, default="追加", cancel="覆盖")
+            if not ret:
                 return
-            elif ret == IDNO:
+            elif ret is None:
                 self.server_list.delete_all_servers()
 
             # 加载服务器记录
@@ -149,19 +148,19 @@ class RecordBar(Frame):
                     server_info.load_favicon_photo()
                     self.server_list.add_server(server_info)
                 except KeyError:
-                    MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    showerror("扫描记录加载错误", "数据加载错误", parent=self)
                     return
                 except ModuleNotFoundError:
-                    MessageBox(self.winfo_id(), "不接受旧版本 scrd 文件", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+                    showerror("扫描记录加载错误", "不接受旧版本 scrd 文件", parent=self)
                     return
             # 加载配置
             config = data.get("configs")
             if config:
                 scanbar.set_config(config)
         except JSONDecodeError:
-            MessageBox(self.winfo_id(), "非JSON文本", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+            showerror("扫描记录加载错误", "非JSON文本", parent=self)
         except UnicodeDecodeError:
-            MessageBox(self.winfo_id(), "文件内容解码错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+            showerror("扫描记录加载错误", "文件内容解码错误", parent=self)
 
     def save_record(self):
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
@@ -248,7 +247,7 @@ class ServerList(LabelFrame):
                 if state == 1:
                     self.add_lock.release()
                     self.logger.log(DEBUG, "过滤正则表达式错误")
-                    MessageBox(self.winfo_id(), "不规范的正则表达式", "服务器过滤错误", MB_ICONERROR | MB_OK)
+                    showerror("服务器过滤错误", "不规范的正则表达式", parent=self)
                     return
 
         self.update_info_pos()  # 更新提示
@@ -278,18 +277,19 @@ class ServerList(LabelFrame):
         self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
 
     def delete_all_servers(self, *_):
-        ret = MessageBox(self.winfo_id(), "确定要删除所有服务器吗？", "删除所有服务器", MB_YESNOCANCEL | MB_ICONWARNING)
-        if ret == IDYES:
-            try:
-                for child in self.server_map.values():
-                    child.destroy()
-                self.server_map.clear()
-                self.show_serverC = 0
-                self.all_serverC = 0
-                self.servers_info.update_counter(0, 0)
-            except Exception as e:
-                print(e.args)
-            self.update_info_pos()
+        ret = askyesnocancel("删除所有服务器", "确定要删除所有服务器吗？", parent=self)
+        if not ret:
+            return
+        try:
+            for child in self.server_map.values():
+                child.destroy()
+            self.server_map.clear()
+            self.show_serverC = 0
+            self.all_serverC = 0
+            self.servers_info.update_counter(0, 0)
+        except Exception as e:
+            print(e.args)
+        self.update_info_pos()
 
     @property
     def servers_filter(self) -> ServersFilter:
