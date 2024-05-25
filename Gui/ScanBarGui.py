@@ -1,19 +1,18 @@
 # -*- coding: UTF-8 -*-
-from ping3 import ping
+from json import load as json_load, dump as json_dump
 from sys import stderr
 from time import perf_counter
+
 from comtypes import CoInitialize, CoUninitialize
-from json import load as json_load, dump as json_dump
-from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
+from ping3 import ping
 from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
+from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
 
 from Gui.ServerListGui import ServerList
-from Libs.TaskbarLib import *
-from Network.Scanner import *
 from Gui.Widgets import *
+from Libs.TaskbarLib import *
 from Libs.Vars import *
-
-scanbar: Any = None
+from Network.Scanner import *
 
 
 class ScanBar(LabelFrame):
@@ -69,8 +68,6 @@ class ScanBar(LabelFrame):
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
         self.load_user_config()
-        global scanbar
-        scanbar = self
 
     def close_save_config(self):
         try:
