@@ -144,40 +144,51 @@ class RecordBar(Frame):
             # 询问加载方式
             Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
             ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self)
-            if not ret:
+            # ret = None  取消
+            # ret = False 覆盖
+            # ret = True  追加
+            if ret is None:  # ret = None
                 return
-            elif ret is None:
+            if not ret:  # ret = False
                 self.server_list.delete_all_servers()
-
-            # 加载服务器记录
-            for server_obj_bytes in data["servers"]:
-                try:
-                    server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
-                    server_info.load_favicon_photo()
-                    self.server_list.add_server(server_info)
-                except KeyError:
-                    showerror("扫描记录加载错误", "数据加载错误", parent=self)
-                    return
-                except ModuleNotFoundError:
-                    import Network.Scanner
-                    sys.modules['scanner'] = Network.Scanner
-                    server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
-                    server_info.load_favicon_photo()
-                    self.server_list.add_server(server_info)
-                    del sys.modules['scanner']
+            self.load_scan_record(data)
 
             # 加载配置
             config = data.get("configs")
             if config:
                 scan_bar.set_config(config)
+
         except JSONDecodeError:
             showerror("扫描记录加载错误", "非JSON文本", parent=self)
         except UnicodeDecodeError:
             showerror("扫描记录加载错误", "文件内容解码错误", parent=self)
 
+    def load_scan_record(self, data: Dict):
+        """
+        加载服务器记录
+
+        @param data: 服务器信息
+        """
+        # 检查数据中是否存在必需的键
+        if "servers" not in data:
+            showerror("扫描记录加载错误", "数据加载错误", parent=self)
+            return
+        for server_obj_bytes in data["servers"]:
+            try:
+                server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                server_info.load_favicon_photo()
+                self.server_list.add_server(server_info)
+            except ModuleNotFoundError:
+                import Network.Scanner
+                sys.modules['scanner'] = Network.Scanner
+                server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                server_info.load_favicon_photo()
+                self.server_list.add_server(server_info)
+                del sys.modules['scanner']
+
     def save_record(self):
         # noinspection PyUnresolvedReferences
-        scan_bar = self.master.master.scan_bar
+        scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
                                           title="选择扫描记录文件",
                                           defaultextension=".scrd",
@@ -185,7 +196,7 @@ class RecordBar(Frame):
                                           filetypes=[("Server Scan Record", "*.scrd"),
                                                      ("JSON", "*.json"),
                                                      ("All Files", "*.*")])
-        if fp == "":
+        if not fp:
             return
 
         servers = []
