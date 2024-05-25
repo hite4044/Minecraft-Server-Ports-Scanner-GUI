@@ -234,7 +234,7 @@ class VersionInfo(Frame, Infer):
 
         if data.version_type == "release":
             self.version_type.configure(text="版本类型：正式版")
-        elif data.version_type == "release":
+        elif data.version_type == "release":  # FIXME: 两者条件完全相同
             self.version_type.configure(text=f"版本类型：快照版")
         else:
             self.version_type.configure(text=f"版本类型(未检测)：{data.version_type}")
