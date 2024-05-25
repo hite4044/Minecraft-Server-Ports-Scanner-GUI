@@ -1,18 +1,19 @@
 # -*- coding: UTF-8 -*-
-from typing import Dict
-from pyperclip import copy
+import sys
+from base64 import b64decode, b64encode
+from json import load as json_load, JSONDecodeError, dump as json_dump
+from pickle import loads as pickle_loads, dumps as pickle_dumps
 from re import match, error
 from tkinter import filedialog
-from win32gui import MessageBox
-from base64 import b64decode, b64encode
-from ttkbootstrap.scrolled import ScrolledFrame
-from pickle import loads as pickle_loads, dumps as pickle_dumps
-from json import load as json_load, JSONDecodeError, dump as json_dump
-from win32con import MB_OK, MB_ICONERROR, MB_YESNOCANCEL, MB_ICONQUESTION, IDYES, IDNO, IDCANCEL, MB_ICONWARNING
+from tkinter.messagebox import askyesnocancel, showerror
+from typing import Dict
 
-from Libs.WinLib import write_msg_window_buttons
+from pyperclip import copy
+from ttkbootstrap.scrolled import ScrolledFrame
+
 from Gui.InfoGui import InfoWindow
 from Gui.Widgets import *
+from Libs.WinLib import override_msg_window_buttons
 
 
 class ServersFilter:
@@ -118,7 +119,7 @@ class RecordBar(Frame):
 
     def load_record(self):
         # noinspection PyUnresolvedReferences
-        scanbar = self.master.master.master.master.scan_bar
+        scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.askopenfilename(title="选择扫描记录文件",
                                         filetypes=[("Server Scan Record", "*.scrd"),
                                                    ("JSON", "*.json"),
@@ -132,41 +133,62 @@ class RecordBar(Frame):
             if isinstance(data, list):  # 旧版支持
                 data = {"servers": data}
             elif not isinstance(data, dict):
-                MessageBox(self.winfo_id(),
-                           "无法解析文件内容，请检查文件格式", "扫描记录加载错误",
-                           MB_OK | MB_ICONERROR)
+                showerror("扫描记录加载错误", "无法解析文件内容，请检查文件格式", parent=self)
                 return
+            if not (isinstance(data, dict) and data.get("servers") and data.get("configs")):
+                if not isinstance(data, list):
+                    showerror("扫描记录加载错误", "无法解析文件内容，请检查文件格式", parent=self)
+                    return
+                data = {"servers": data}
 
             # 询问加载方式
-            Thread(target=write_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
-            ret = MessageBox(self.winfo_id(), "怎样加载扫描记录?", "加载方式 ⠀", MB_YESNOCANCEL | MB_ICONQUESTION)
-            if ret == IDCANCEL:
+            Thread(target=override_msg_window_buttons, args=("追加", "覆盖"), daemon=True).start()
+            ret = askyesnocancel("加载方式 ⠀", "怎样加载扫描记录?", parent=self)
+            # ret = None  取消
+            # ret = False 覆盖
+            # ret = True  追加
+            if ret is None:  # ret = None
                 return
-            elif ret == IDNO:
+            if not ret:  # ret = False
                 self.server_list.delete_all_servers()
-
-            # 加载服务器记录
-            for server_obj_bytes in data["servers"]:
-                try:
-                    server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
-                    server_info.load_favicon_photo()
-                    self.server_list.add_server(server_info)
-                except KeyError:
-                    MessageBox(self.winfo_id(), "数据加载错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
-                    return
+            self.load_scan_record(data)
 
             # 加载配置
             config = data.get("configs")
             if config:
-                scanbar.set_config(config)
+                scan_bar.set_config(config)
+
         except JSONDecodeError:
-            MessageBox(self.winfo_id(), "非JSON文本", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+            showerror("扫描记录加载错误", "非JSON文本", parent=self)
         except UnicodeDecodeError:
-            MessageBox(self.winfo_id(), "文件内容解码错误", "扫描记录加载错误", MB_OK | MB_ICONERROR)
+            showerror("扫描记录加载错误", "文件内容解码错误", parent=self)
+
+    def load_scan_record(self, data: Dict):
+        """
+        加载服务器记录
+
+        @param data: 服务器信息
+        """
+        # 检查数据中是否存在必需的键
+        if "servers" not in data:
+            showerror("扫描记录加载错误", "数据加载错误", parent=self)
+            return
+        for server_obj_bytes in data["servers"]:
+            try:
+                server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                server_info.load_favicon_photo()
+                self.server_list.add_server(server_info)
+            except ModuleNotFoundError:
+                import Network.Scanner
+                sys.modules['scanner'] = Network.Scanner
+                server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
+                server_info.load_favicon_photo()
+                self.server_list.add_server(server_info)
+                del sys.modules['scanner']
 
     def save_record(self):
         # noinspection PyUnresolvedReferences
-        scanbar = self.master.master.scan_bar
+        scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
                                           title="选择扫描记录文件",
                                           defaultextension=".scrd",
@@ -174,7 +196,7 @@ class RecordBar(Frame):
                                           filetypes=[("Server Scan Record", "*.scrd"),
                                                      ("JSON", "*.json"),
                                                      ("All Files", "*.*")])
-        if fp == "":
+        if not fp:
             return
 
         servers = []
@@ -182,7 +204,7 @@ class RecordBar(Frame):
             copied_info: ServerInfo = copy(server_info)
             copied_info.favicon_photo = None
             servers.append(b64encode(pickle_dumps(copied_info)).decode("utf-8"))
-        data = {"servers": servers, "configs": scanbar.get_config()}
+        data = {"servers": servers, "configs": scan_bar.get_config()}
 
         with open(file=fp, mode="w+", encoding="utf-8") as f:
             json_dump(data, f)
@@ -251,7 +273,7 @@ class ServerList(LabelFrame):
                 if state == 1:
                     self.add_lock.release()
                     self.logger.log(DEBUG, "过滤正则表达式错误")
-                    MessageBox(self.winfo_id(), "不规范的正则表达式", "服务器过滤错误", MB_ICONERROR | MB_OK)
+                    showerror("服务器过滤错误", "不规范的正则表达式", parent=self)
                     return
 
         self.update_info_pos()  # 更新提示
@@ -281,18 +303,19 @@ class ServerList(LabelFrame):
         self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
 
     def delete_all_servers(self, *_):
-        ret = MessageBox(self.winfo_id(), "确定要删除所有服务器吗？", "删除所有服务器", MB_YESNOCANCEL | MB_ICONWARNING)
-        if ret == IDYES:
-            try:
-                for child in self.server_map.values():
-                    child.destroy()
-                self.server_map.clear()
-                self.show_serverC = 0
-                self.all_serverC = 0
-                self.servers_info.update_counter(0, 0)
-            except Exception as e:
-                print(e.args)
-            self.update_info_pos()
+        ret = askyesnocancel("删除所有服务器", "确定要删除所有服务器吗？", parent=self)
+        if not ret:
+            return
+        try:
+            for child in self.server_map.values():
+                child.destroy()
+            self.server_map.clear()
+            self.show_serverC = 0
+            self.all_serverC = 0
+            self.servers_info.update_counter(0, 0)
+        except Exception as e:
+            print(e.args)
+        self.update_info_pos()
 
     @property
     def servers_filter(self) -> ServersFilter:
@@ -358,11 +381,15 @@ class ServerFrame(Frame):
                 return
         self.info_window: InfoWindow = InfoWindow(self, self.data)
 
-    def load_motd_text(self):
-        text = str()
-        for extra in self.data.description_json:
-            text += extra["text"]
-        return text
+    def load_motd_text(self) -> str:
+        """
+        将一串 MOTD 信息转换为纯文本
+
+        Returns:
+            str: 连接后的 MOTD 文本字符串。
+        """
+        text_list = [extra["text"] for extra in self.data.description_json]
+        return ''.join(text_list)
 
     def pop_menu(self, event: Event):
         menu = Menu()

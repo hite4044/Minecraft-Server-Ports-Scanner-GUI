@@ -1,9 +1,8 @@
 # -*- coding: UTF-8 -*-
-from os.path import abspath
 from tkinter import Listbox
-from win32gui import MessageBox
+from tkinter.messagebox import showinfo
+
 from ttkbootstrap.tooltip import ToolTip
-from win32con import MB_ICONINFORMATION, MB_OK
 
 from Gui.Widgets import *
 from Network.Scanner import DescriptionParser, Port, ServerInfo
@@ -20,9 +19,9 @@ class InfoWindow(Toplevel, Infer):
     """信息主窗口"""
 
     def __init__(self, master: Misc, data: ServerInfo):
+        from Gui.Widgets import MOTD, Tabs
+
         super(InfoWindow, self).__init__(master=master)
-        self.favicon_image = None
-        self.default_favicon = None
         self.data = data
         self.load_window_title()
         self.wm_resizable(True, True)
@@ -40,40 +39,35 @@ class InfoWindow(Toplevel, Infer):
         self.load_data(data)
         self.pack_widgets()
 
-    # FIXME: 这是为什么？没人碰了他！
     def load_data(self, data: ServerInfo):
-        self.data = data
-        if data.has_favicon:
-            self.favicon_image = self.data.favicon
-        else:
-            self.favicon_image = Image.open(abspath(r"assets\server_icon.png"))
-        self.favicon_image = self.favicon_image.resize((128, 128))
-        self.default_favicon = ImageTk.PhotoImage(self.favicon_image)
-        self.favicon.configure(image=self.default_favicon)
+        favicon = self.data.favicon_photo if data.has_favicon \
+            else ImageTk.PhotoImage(file=r"assets\server_icon.png")
+        self.favicon.configure(image=favicon)
+        # 将 favicon 引用传递给 self.favicon.image, 使其变成 self.favicon 的属性, 防止其被 gc 回收
+        self.favicon.image = favicon
+        self.load_icon(favicon)
 
+        self.data = data
         self.MOTD.load_motd(self.data)
         self.base_info.load_data(self.data)
         self.version_info.load_data(self.data)
 
-        self.load_icon()
-
     def reget_info(self):
         server_status = Port(self.data.host, self.data.port).get_server_info()
         if server_status["status"] == "offline":
-            MessageBox(self.winfo_id(),
-                       "服务器已经死了，都是你害的辣 (doge",
-                       "服务器已离线",
-                       MB_OK | MB_ICONINFORMATION)
+            showinfo("服务器已经死了，都是你害的辣 (doge", "服务器已离线", parent=self)
         elif server_status["status"] == "error":
-            MessageBox(self.winfo_id(),
-                       "服务器有点问题：" + server_status["msg"],
-                       "服务器：?",
-                       MB_OK | MB_ICONINFORMATION)
+            showinfo("服务器有点问题：" + server_status["msg"], "服务器：?", parent=self)
         elif server_status["status"] == "online":
             self.load_data(ServerInfo(server_status["info"]))
 
-    def load_icon(self):
-        self.iconphoto(False, self.default_favicon)
+    def load_icon(self, favicon: PhotoImage):
+        """
+        将一个 PIL.ImageTK.PhotoImage 加载为 GUI 图标
+
+        @param favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
+        """
+        self.iconphoto(False, favicon)
 
     def pack_widgets(self):
         self.favicon.pack_configure()
@@ -240,7 +234,7 @@ class VersionInfo(Frame, Infer):
 
         if data.version_type == "release":
             self.version_type.configure(text="版本类型：正式版")
-        elif data.version_type == "release":
+        elif data.version_type == "release":  # FIXME: 两者条件完全相同
             self.version_type.configure(text=f"版本类型：快照版")
         else:
             self.version_type.configure(text=f"版本类型(未检测)：{data.version_type}")

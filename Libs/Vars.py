@@ -1,12 +1,11 @@
 # -*- coding: UTF-8 -*-
 import json
 from os import mkdir
-from typing import List, Dict
 from os.path import join as path_join, isfile, exists
-from json import dump as json_dump, load as json_load
+from typing import List, Dict
 
-from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32api import GetSystemMetrics
+from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32gui import GetDC, ReleaseDC
 from win32print import GetDeviceCaps
 
@@ -87,7 +86,6 @@ color_map_hex: Dict[str, str] = {
     "white": "#FFFFFF",
 }
 
-
 # 加载协议映射表
 protocol_map: List[Dict[str, str]] = []
 json_file_path = path_join("assets", "protocol_map.json")
@@ -123,36 +121,30 @@ class UserAddressOperator:
             with open(self.user_address_json, "w+", encoding="utf-8") as wfp:
                 wfp.write("{\n\t\"address_list\": []\n}")
 
-    def readConfigFileList(self) -> List[str]:
+    @staticmethod
+    def read_config_file_list():
         """
-        读取user_address_record.json数据，并添加进ServerList
-        :return List[str]
+        读取 user_address_record.json 数据，并添加进 server_addresses
         """
         global server_addresses
-        result: List[str] = []
 
         try:
-            with open(self.user_address_json, "r", encoding="utf-8") as rfp:
+            with open(UserAddressOperator.user_address_json, "r", encoding="utf-8") as rfp:
                 json_data: dict = json.loads(rfp.read())
                 address_list: List[str] = json_data.get('address_list')
-
                 # 未读取到address_list
                 if not address_list:
-                    return result
-
+                    return
                 # 读取到数据后
-                if address_list:
-                    server_addresses.extend(address_list)
+                server_addresses.extend(address_list)
         except Exception as e:
             print("读取 user_address_record.json 文件时：", e)
-        finally:
-            return result
 
-    def writeAddressToConfigFile(self, address: str) -> bool:
+    def write_address_to_config_file(self, address: str) -> bool:
         """
         写入服务器地址至user_address_record.json文件中去
         :param address: str 服务器地址
-        :return bool
+        :return: bool
         """
         try:
             # 获取原有的用户域名
@@ -173,9 +165,10 @@ class UserAddressOperator:
 class ScaleRater:
     """
     获取屏幕缩放比例的类
-    因为窗口创建后计算值不在准确
+    因为窗口创建后计算值不再准确
     所以仅在窗口创建前获取一次值
     """
+
     def __init__(self):
         self.scale_rate: float = 1.0
         self.update_scale_rate()
@@ -194,6 +187,6 @@ class ScaleRater:
 
 
 # 初始化数据
-UserAddressOperator().readConfigFileList()
+UserAddressOperator.read_config_file_list()
 
 scale_rater = ScaleRater()

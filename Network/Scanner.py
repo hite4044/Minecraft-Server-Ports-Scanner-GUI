@@ -248,7 +248,7 @@ class ServerInfo:
 
         # 服务器图标信息
         self.favicon_data = data.get("favicon")
-        self.favicon_photo = self.favicon = None
+        self.favicon_photo = None
         self.has_favicon = bool(self.favicon_data)
         if self.has_favicon:
             self.favicon_data = b64decode(self.favicon_data.replace("data:image/png;base64,", ""))
@@ -295,8 +295,8 @@ class ServerInfo:
 
     def load_favicon_photo(self):
         if self.has_favicon:
-            self.favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
-            self.favicon_photo = ImageTk.PhotoImage(self.favicon)
+            favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
+            self.favicon_photo = ImageTk.PhotoImage(favicon)
 
     @property
     def text(self) -> str:

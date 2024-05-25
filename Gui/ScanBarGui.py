@@ -13,8 +13,6 @@ from Network.Scanner import *
 from Gui.Widgets import *
 from Libs.Vars import *
 
-scanbar: Any = None
-
 
 class ScanBar(LabelFrame):
     def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
@@ -69,8 +67,6 @@ class ScanBar(LabelFrame):
         self.stop_button.pack(fill=X, expand=True, pady=2)
 
         self.load_user_config()
-        global scanbar
-        scanbar = self
 
     def close_save_config(self):
         try:
@@ -156,11 +152,11 @@ class ScanBar(LabelFrame):
 
         # 写入配置文件，使得下一次自动加载
         self.logger.log(INFO, f"将地址 [{host}] 写入配置文件。")
-        write_result = self.user_address_operator.writeAddressToConfigFile(address=host)
+        write_result = self.user_address_operator.write_address_to_config_file(address=host)
         if write_result is False:
             self.logger.log(ERROR, f"写入地址 [{host}] 时，文件操作时发生错误！")
             MessageBox(self.winfo_id(),
-                       f"对：{self.user_address_operator.user_address_json} 文件操作时发生错误！",
+                       f"对：{UserAddressOperator.user_address_json} 文件操作时发生错误！",
                        "文件操作错误",
                        MB_OK | MB_ICONERROR)
 
