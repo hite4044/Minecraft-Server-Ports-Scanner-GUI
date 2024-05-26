@@ -36,6 +36,7 @@ class InfoWindow(Toplevel, Infer):
 
         if self.data.mod_server:
             self.mod_info = ModInfo(self)
+            self.mod_info.load_data(self.data)
 
         self.load_data(data)
         self.pack_widgets()
@@ -267,10 +268,8 @@ class ModInfo(Frame, Infer):
         self.mod_info.pack_configure(fill=BOTH, expand=True, side=LEFT)
 
     def load_data(self, data: ServerInfo):
+        print("Mod Pack Server Info:", data.mod_pack_info)
         self.data = data
-
-        if data.mod_pack_server:
-            print("Mod Pack Server Info:", data.mod_pack_info)
         self.mod_list.delete(*self.mod_list.get_children())
         for mod in data.mod_list.items():
             self.mod_list.insert("", END, values=mod)

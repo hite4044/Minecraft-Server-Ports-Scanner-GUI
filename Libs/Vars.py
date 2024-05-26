@@ -197,14 +197,13 @@ class UserSettingsLoader:
 
     @staticmethod
     def defaults() -> Dict:
-        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly"}
+        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly", 'ping_before_scan': True}
 
 
 class UserSettingsSaver:
     @staticmethod
     def save_user_configs(loader: UserSettingsLoader):
         with open(loader.config_path, "w+", encoding="utf-8") as f:
-            print(loader.configs)
             json.dump(loader.configs, f, indent=4)
 
 

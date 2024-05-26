@@ -55,7 +55,7 @@ class GUI(Window):
         self.logger = Logger(self.tabs)
         self.server_scanF = Frame(self.tabs)
         self.servers = ServerList(self.server_scanF, self.logger)
-        self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers)
+        self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers, self)
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")

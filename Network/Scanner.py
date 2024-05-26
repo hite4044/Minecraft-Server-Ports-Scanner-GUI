@@ -1,14 +1,15 @@
 # -*- coding: UTF-8 -*-
-from Libs import Vars
-from io import BytesIO
-from time import sleep
-from copy import deepcopy
 from base64 import b64decode
-from typing import List, Any
-from PIL import Image, ImageTk
+from copy import deepcopy
+from io import BytesIO
 from queue import Queue, Empty
 from threading import Thread, Lock
+from time import sleep
+from typing import List, Any, Dict, Literal, Union
 
+from PIL import Image, ImageTk
+
+from Libs import Vars
 
 ServerPinger: Any = None
 Address: Any = None
@@ -152,6 +153,7 @@ class ServerScanner:
 
 class Port:
     """获取服务器JSON数据"""
+
     def __init__(self, host: str = "", port: int = 25565, timeout: float = 0.7, protocol_version: int = 47):
         self.sock = None
         self.host = host
@@ -199,8 +201,8 @@ class ServerInfo:
     用于解析MC服务器的JSON数据
     """
 
-    def __init__(self, info: dict, load_favicon: bool = True) -> None:
-        data = info["details"]
+    def __init__(self, info: dict) -> None:
+        data: Dict = info["details"]
         self.parsed_data = data
 
         # 基本信息
@@ -209,51 +211,15 @@ class ServerInfo:
         self.ping = info["ping"]
 
         # 服务器版本信息
-        self.version_name = data.get("version", {"name": "未知"})["name"]
-        self.protocol_version = data.get("version", {"protocol": "未知"})["protocol"]
-
-        if self.protocol_version == -1:
-            self.protocol_info = {}
-        else:
-            for ver in Vars.protocol_map:
-                if ver["version"] == self.protocol_version:
-                    self.protocol_info: dict = ver
-                    break
-            else:
-                self.protocol_info = {}
-
-        self.protocol_name = self.protocol_info.get("minecraftVersion", "未知")
-        self.protocol_major_name = self.protocol_info.get("majorVersion", "未知")
-
-        self.version_type = "unknown"
-        if self.protocol_info.get("releaseType"):
-            self.version_type = self.protocol_info["releaseType"]
-        elif "w" in self.protocol_name:
-            self.version_type = "snapshot"
-        elif "." in self.protocol_name:
-            self.version_type = "release"
+        (self.version_name, self.protocol_version, self.protocol_info,
+         self.protocol_name, self.protocol_major_name, self.version_type) \
+            = self.parse_version_info()
 
         # 服务器玩家信息
-        self.player_max = data.get("players", {"max": "未知"})["max"]
-        self.player_online = data.get("players", {"online": "未知"})["online"]
-        if data.get("players", {}).get("sample"):
-            self.players = data["players"]["sample"]
-            for _ in range(len(self.players)):
-                player = self.players.pop(0)
-                if player["name"] == "Anonymous Player":
-                    player["name"] = "匿名玩家"
-                self.players.append(player)
-        else:
-            self.players = []
+        self.player_max, self.player_online, self.players = self.parse_player_info()
 
         # 服务器图标信息
-        self.favicon_data = data.get("favicon")
-        self.favicon_photo = None
-        self.has_favicon = bool(self.favicon_data)
-        if self.has_favicon:
-            self.favicon_data = b64decode(self.favicon_data.replace("data:image/png;base64,", ""))
-            if load_favicon:
-                self.load_favicon_photo()
+        self.favicon_data, self.favicon_photo, self.has_favicon = self.parse_icon_info()
 
         # 服务器标题
         try:
@@ -293,10 +259,59 @@ class ServerInfo:
     def __str__(self) -> str:
         return self.text
 
-    def load_favicon_photo(self):
-        if self.has_favicon:
+    def load_favicon_photo(self, has_favicon: bool = True, favicon_data=None, load_from_self=True) -> Union[
+        ImageTk.PhotoImage, None]:
+        if not load_from_self:
+            if has_favicon:
+                favicon = Image.open(BytesIO(favicon_data), formats=["PNG"])
+                return ImageTk.PhotoImage(favicon)
+        elif self.has_favicon:
             favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
             self.favicon_photo = ImageTk.PhotoImage(favicon)
+        return None
+
+    def parse_version_info(self):
+        version_name = self.parsed_data.get("version", {"name": "未知"})["name"]
+        protocol_version = self.parsed_data.get("version", {"protocol": "未知"})["protocol"]
+
+        protocol_info = next((ver for ver in Vars.protocol_map if ver["version"] == protocol_version), {})
+
+        protocol_name = protocol_info.get("minecraftVersion", "未知")
+        protocol_major_name = protocol_info.get("majorVersion", "未知")
+
+        version_type = "unknown"
+        if protocol_info.get("releaseType"):
+            version_type = protocol_info["releaseType"]
+        elif "w" in protocol_name:
+            version_type = "snapshot"
+        elif "." in protocol_name:
+            version_type = "release"
+        return version_name, protocol_version, protocol_info, protocol_name, protocol_major_name, version_type
+
+    def parse_player_info(self):
+        # 如果你的 IDE 提示我的类型注释不对, 那就是 IDE 的问题
+        # 类型注释是正确的, 一层套一层导致 IDE 爆炸了 ( 其实是因为 self.parsed_data 没有做也很难做类型注释 )
+        player_max: Union[int, Literal["未知"]] = self.parsed_data.get("players", {"max": "未知"})["max"]
+        player_number = self.parsed_data.get("players", {"online": "未知"})["online"]
+        if self.parsed_data.get("players", {}).get("sample"):
+            player_list: List = self.parsed_data["players"]["sample"]
+            for _ in range(len(player_list)):
+                player = player_list.pop(0)
+                if player["name"] == "Anonymous Player":
+                    player["name"] = "匿名玩家"
+                player_list.append(player)
+        else:
+            player_list = []
+
+        return player_max, player_number, player_list
+
+    def parse_icon_info(self):
+        favicon_data = self.parsed_data.get("favicon")
+        has_favicon = bool(favicon_data)
+        if favicon_data:
+            favicon_data = b64decode(favicon_data.replace("data:image/png;base64,", ""))
+        favicon_photo = self.load_favicon_photo(has_favicon, favicon_data, False)
+        return favicon_data, favicon_photo, has_favicon
 
     @property
     def text(self) -> str:
