@@ -186,7 +186,30 @@ class ScaleRater:
         return self.scale_rate
 
 
+class UserSettingsLoader:
+    def __init__(self):
+        self.config_path = path_join(config_dir, "user_configs.json")
+        self.configs: Dict = self.defaults()
+        if not exists(self.config_path):
+            return
+        with open(self.config_path, "r", encoding="utf-8") as f:
+            self.configs = {**self.configs, **json.load(f)}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
+
+    @staticmethod
+    def defaults() -> Dict:
+        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly"}
+
+
+class UserSettingsSaver:
+    @staticmethod
+    def save_user_configs(loader: UserSettingsLoader):
+        with open(loader.config_path, "w+", encoding="utf-8") as f:
+            print(loader.configs)
+            json.dump(loader.configs, f, indent=4)
+
+
 # 初始化数据
 UserAddressOperator.read_config_file_list()
 
 scale_rater = ScaleRater()
+user_settings_loader = UserSettingsLoader()

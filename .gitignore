@@ -162,3 +162,5 @@ cython_debug/
 /config/user_address_record.json
 /config/scan_config.json
 /config/theme_config.json
+/config/user_settings.json
+/config/user_configs.json

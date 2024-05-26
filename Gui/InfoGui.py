@@ -1,10 +1,13 @@
 # -*- coding: UTF-8 -*-
 from tkinter import Listbox
 from tkinter.messagebox import showinfo
+from tkinter.ttk import Label
+from typing import Tuple
 
 from ttkbootstrap.tooltip import ToolTip
 
 from Gui.Widgets import *
+from Gui.Widgets import MOTD
 from Network.Scanner import DescriptionParser, Port, ServerInfo
 
 
@@ -205,8 +208,10 @@ class VersionInfo(Frame, Infer):
                 (self.protocol_version, "服务器协议版本号 (几乎每个MC版本都有不同版本的协议版本号)"),
                 (self.major_name, "大版本 (该服务器是属于哪个大版本的)"),
                 (self.version_type, "服务器版本的类型")]
+        tip: tuple[Label, str] | tuple[MOTD, str]
         for tip in tips:
-            ToolTip(tip[0], tip[1], delay=2000)
+            print(tip[1])
+            ToolTip(tip[0], tip[1], delay=0, alpha=0.8)
 
     def pack_widgets(self):
         self.version_name_frame.pack()
