@@ -11,6 +11,7 @@ from pyperclip import copy as copy_clipboard
 from time import strftime, localtime, time, sleep
 from copy import copy
 
+from Libs import Vars
 from Libs.Vars import scale_rater, color_map_hex
 from Network.Scanner import ServerInfo
 from Libs.ColorLib import Color
@@ -478,6 +479,7 @@ class ThemesSelector(Frame):
 
     def on_theme_selected(self, _):
         Style().theme_use(self.theme_selector.get())
+        Vars.user_settings_loader.configs['theme_name'] = self.theme_selector.get()
 
 
 class RangeSelector(Frame):

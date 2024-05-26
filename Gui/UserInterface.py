@@ -4,6 +4,7 @@ from time import perf_counter
 
 from Gui.ScanBarGui import ScanBar
 from Gui.ServerListGui import ServerList
+from Gui.SettingsFrame import SettingsFrame
 from Gui.Widgets import *
 from Libs.Vars import *
 
@@ -54,6 +55,7 @@ class GUI(Window):
         self.tabs = Tabs(self)
         self.logger = Logger(self.tabs)
         self.server_scanF = Frame(self.tabs)
+        self.settings = SettingsFrame(self.tabs)
         self.servers = ServerList(self.server_scanF, self.logger)
         self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers, self)
 
@@ -75,7 +77,7 @@ class GUI(Window):
             print("图标文件丢失", file=stderr)
 
     def on_delete_window(self):
-        user_settings_loader.configs['theme_name'] = Style().theme_use()
+        # user_settings_loader.configs['theme_name'] = Style().theme_use()
         self.scan_bar.close_save_config()
         UserSettingsSaver.save_user_configs(user_settings_loader)
         self.destroy()
@@ -88,3 +90,4 @@ class GUI(Window):
         self.scan_bar.pack(side=BOTTOM, fill=X, padx=3, pady=3)
         self.tabs.add(self.server_scanF, text="控制面板")
         self.tabs.add(self.logger, text="日志")
+        self.tabs.add(self.settings, text="设置")
