@@ -39,7 +39,7 @@ class ServerFilter(Frame):
     def __init__(self, master: Misc):
         super(ServerFilter, self).__init__(master)
         self.version_frame = Frame(self)
-        self.version_entry = TextEntry(self.version_frame, tip="版本名: ")
+        self.version_entry = TextEntryFrame(self.version_frame, tip="版本名: ")
         self.version_re_var = BooleanVar(self.version_frame, value=False)
         self.version_re_check = Checkbutton(self.version_frame,
                                             text="正则匹配",

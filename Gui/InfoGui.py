@@ -221,20 +221,19 @@ class VersionInfo(Frame, Infer):
     def load_data(self, data: ServerInfo):
         self.data = data
 
-        self.version_name_text.configure(text="版本名：")
-        temp_data = data
         if "§" in data.version_name:
-            temp_data.description_json = DescriptionParser.format_chars_to_extras(temp_data.version_name)
+            data.description_json = DescriptionParser.format_chars_to_extras(data.version_name)
         else:
-            temp_data.description_json = [{"text": temp_data.version_name}]
-        self.version_name_MOTD.load_motd(temp_data)
+            data.description_json = [{"text": data.version_name}]
+        self.version_name_text.configure(text="版本名：")
+        self.version_name_MOTD.load_motd(data)
         self.minecraft_version.configure(text=f"正式版本名：{data.protocol_name}")
         self.protocol_version.configure(text=f"协议版本号：{data.protocol_version}")
         self.major_name.configure(text=f"大版本：{data.protocol_major_name}")
 
         if data.version_type == "release":
             self.version_type.configure(text="版本类型：正式版")
-        elif data.version_type == "release":  # FIXME: 两者条件完全相同
+        elif data.version_type == "snapshot":  # FIXME: 我也不知道是不是 snapshot :-)
             self.version_type.configure(text=f"版本类型：快照版")
         else:
             self.version_type.configure(text=f"版本类型(未检测)：{data.version_type}")

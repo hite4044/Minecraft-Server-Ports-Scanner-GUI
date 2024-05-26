@@ -1,7 +1,6 @@
 # -*- coding: UTF-8 -*-
 from math import ceil
 from queue import Queue
-from random import randint
 from ttkbootstrap import *
 from typing import Any, List
 from tkinter.font import Font
@@ -32,23 +31,19 @@ class MOTD(Text):
 
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
-        try:
-            self.delete("1.0", END)
-        except IndexError:
-            pass
+        self.delete("1.0", END)
         for extra in data.description_json:
             try:
-                tag = hex(randint(0, 114514))
                 tag_font = Font(family="Unifont", size=12)
                 if extra.get("color"):
                     if "#" not in extra["color"]:
                         color = color_map_hex[extra["color"]]
                     else:
                         color = extra["color"]
-                    self.tag_configure(tag, foreground=color)
+                    self.tag_configure("_", foreground=color)
 
                 if extra.get("underline") or extra.get("underlined"):
-                    self.tag_configure(tag, underline=True)
+                    self.tag_configure("_", underline=True)
                 if extra.get("bold"):
                     tag_font.config(family="宋体", weight="bold")
                 elif extra.get("italic"):
@@ -56,16 +51,16 @@ class MOTD(Text):
                 elif extra.get("strikethrough"):
                     tag_font.config(overstrike=True)
 
-                self.tag_configure(tag, font=tag_font, justify=LEFT)
-                self.insert(END, extra["text"], tag)
+                self.tag_configure("_", font=tag_font, justify=LEFT)
+                self.insert(END, extra["text"], "_")
             except TimeoutError as e:
                 print("MOTD Data Extra Error:", extra, e)
         self.configure(state=DISABLED)
 
 
-class EntryScale(Frame):
+class EntryScaleFrame(Frame):
     def __init__(self, master: Misc, _min: Any, _max: Any, value: Any, text: str, fmt: Any):
-        super(EntryScale, self).__init__(master)
+        super(EntryScaleFrame, self).__init__(master)
         self.min = _min
         self.max = _max
         self.fmt = fmt
@@ -116,19 +111,19 @@ class EntryScale(Frame):
         self.entry.insert(0, str(value))
 
 
-class EntryScaleInt(EntryScale):
+class EntryScaleIntFrame(EntryScaleFrame):
     def __init__(self, master: Misc, _min: int, _max: int, value: int, text: str):
-        super(EntryScaleInt, self).__init__(master, _min, _max, value, text, int)
+        super(EntryScaleIntFrame, self).__init__(master, _min, _max, value, text, int)
 
 
-class EntryScaleFloat(EntryScale):
+class EntryScaleFloatFrame(EntryScaleFrame):
     def __init__(self, master: Misc, _min: float, _max: float, value: float, text: str):
-        super(EntryScaleFloat, self).__init__(master, _min, _max, value, text, float)
+        super(EntryScaleFloatFrame, self).__init__(master, _min, _max, value, text, float)
 
 
-class TextEntry(Frame):
+class TextEntryFrame(Frame):
     def __init__(self, master: Misc, tip: str, value: str = ""):
-        super(TextEntry, self).__init__(master)
+        super(TextEntryFrame, self).__init__(master)
 
         self.text = Label(self, text=tip)
         self.entry = Entry(self)
