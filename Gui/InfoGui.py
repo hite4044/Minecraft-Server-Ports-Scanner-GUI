@@ -3,7 +3,7 @@ from tkinter import Listbox
 from tkinter.messagebox import showinfo
 from tkinter.ttk import Label
 from typing import Tuple
-
+from Libs.Vars import user_settings_loader
 from ttkbootstrap.tooltip import ToolTip
 
 from Gui.Widgets import *
@@ -189,10 +189,11 @@ class VersionInfo(Frame, Infer):
 
         super(VersionInfo, self).__init__(master)
         self.data = None
+        self.if_version_name_shown_as_label: bool = user_settings_loader.configs['if_version_name_shown_as_label']
 
         self.version_name_frame = Frame(self)
-        self.version_name_text = Label(self.version_name_frame, anchor=CENTER)
-        self.version_name_MOTD = MOTD(self.version_name_frame)
+        self.version_name_label = Label(self.version_name_frame, anchor=CENTER)
+        self.version_name_text = MOTD(self.version_name_frame)
         self.minecraft_version = Label(self, anchor=CENTER)
         self.protocol_version = Label(self, anchor=CENTER)
         self.major_name = Label(self, anchor=CENTER)
@@ -202,8 +203,8 @@ class VersionInfo(Frame, Infer):
         self.pack_widgets()
 
     def bind_tip(self):
-        tips = [(self.version_name_text, "服务器版本名 (服务器返回结果)"),
-                (self.version_name_MOTD, "服务器版本名 (服务器返回结果)"),
+        tips = [(self.version_name_label, "服务器版本名 (服务器返回结果)\n部分服务器会修改此部分"),
+                (self.version_name_text, "服务器版本名 (服务器返回结果)\n部分服务器会修改此部分"),
                 (self.minecraft_version, "服务器版本名 (就是大家平时的叫法)"),
                 (self.protocol_version, "服务器协议版本号 (几乎每个MC版本都有不同版本的协议版本号)"),
                 (self.major_name, "大版本 (该服务器是属于哪个大版本的)"),
@@ -215,9 +216,10 @@ class VersionInfo(Frame, Infer):
 
     def pack_widgets(self):
         self.version_name_frame.pack()
-        self.version_name_text.pack(side=LEFT)
-        self.version_name_MOTD.configure(height=1, width=20)
-        self.version_name_MOTD.pack(side=LEFT)
+        self.version_name_label.pack(side=LEFT)
+        if not self.if_version_name_shown_as_label:
+            self.version_name_text.configure(height=1, width=20)
+            self.version_name_text.pack(side=LEFT)
         self.minecraft_version.pack()
         self.protocol_version.pack()
         self.major_name.pack()
@@ -230,8 +232,10 @@ class VersionInfo(Frame, Infer):
             data.description_json = DescriptionParser.format_chars_to_extras(data.version_name)
         else:
             data.description_json = [{"text": data.version_name}]
-        self.version_name_text.configure(text="版本名：")
-        self.version_name_MOTD.load_motd(data)
+        self.version_name_label.configure(text="版本名：")
+        if self.if_version_name_shown_as_label:
+            self.version_name_label.configure(text=f"版本名：{data.version_name}")
+        self.version_name_text.load_motd(data)
         self.minecraft_version.configure(text=f"正式版本名：{data.protocol_name}")
         self.protocol_version.configure(text=f"协议版本号：{data.protocol_version}")
         self.major_name.configure(text=f"大版本：{data.protocol_major_name}")
