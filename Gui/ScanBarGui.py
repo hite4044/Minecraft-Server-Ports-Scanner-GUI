@@ -1,24 +1,27 @@
 # -*- coding: UTF-8 -*-
-from ping3 import ping
+from json import load as json_load, dump as json_dump
 from sys import stderr
 from time import perf_counter
+
 from comtypes import CoInitialize, CoUninitialize
-from json import load as json_load, dump as json_dump
-from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
+from ping3 import ping
 from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
+from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
 
 from Gui.ServerListGui import ServerList
-from Libs.TaskbarLib import *
-from Network.Scanner import *
 from Gui.Widgets import *
+from Libs.TaskbarLib import *
 from Libs.Vars import *
+from Network.Scanner import *
 
 
 class ScanBar(LabelFrame):
-    def __init__(self, master: Misc, logger: Logger, server_list: ServerList):
+    def __init__(self, master: Misc, logger: Logger, server_list: ServerList, gui):
         super(ScanBar, self).__init__(master, text="扫描")
         self.logger = logger
         self.server_list = server_list
+        import Gui.UserInterface
+        self.gui: Gui.UserInterface = gui
 
         self.in_scan = False
         self.scan_obj = ServerScanner()
@@ -41,8 +44,8 @@ class ScanBar(LabelFrame):
         # 输入 Frame
         self.input_frame = Frame(self)
         self.host_input = TextCombobox(self.input_frame, "域名: ", server_addresses)
-        self.timeout_input = EntryScaleFloat(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
-        self.thread_num_input = EntryScaleInt(self.input_frame, 1, 256, 192, "线程数: ")
+        self.timeout_input = EntryScaleFloatFrame(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
+        self.thread_num_input = EntryScaleIntFrame(self.input_frame, 1, 256, 192, "线程数: ")
         self.range_input = RangeSelector(self.input_frame, "端口选择: ", 1024, 65535)
 
         self.input_frame.pack(side=LEFT, fill=X, expand=True, padx=5, pady=5)
@@ -135,8 +138,12 @@ class ScanBar(LabelFrame):
         timeout = self.timeout_input.get_value()
         start, stop = self.range_input.get()
 
-        if not self.check_host(host):
+        self.gui.servers.empty_tip.configure(text="检验连通性...")
+        self.gui.update()
+        if user_settings_loader.configs['ping_before_scan'] and not self.check_host(host):
+            self.gui.servers.empty_tip.configure(text="没有服务器")
             return
+        self.gui.servers.empty_tip.configure(text="没有服务器")
 
         self.in_scan = True
         self.start_button.configure(state=DISABLED)
