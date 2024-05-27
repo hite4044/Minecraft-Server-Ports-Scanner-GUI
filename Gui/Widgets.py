@@ -1,20 +1,22 @@
 # -*- coding: UTF-8 -*-
+from copy import copy
 from math import ceil
 from queue import Queue
-from ttkbootstrap import *
-from typing import Any, List
-from tkinter.font import Font
-from tkinter import Misc, Event
 from threading import Lock, Thread
-from ttkbootstrap.constants import *
-from pyperclip import copy as copy_clipboard
 from time import strftime, localtime, time, sleep
-from copy import copy
+from tkinter import Misc, Event, TclError
+from tkinter.font import Font
+from typing import Any, List
+
+from pyperclip import copy as copy_clipboard
+from tkextrafont import Font
+from ttkbootstrap import *
+from ttkbootstrap.constants import *
 
 from Libs import Vars
+from Libs.ColorLib import Color
 from Libs.Vars import scale_rater, color_map_hex
 from Network.Scanner import ServerInfo
-from Libs.ColorLib import Color
 
 ERROR = "error"
 DEBUG = "debug"
@@ -29,13 +31,17 @@ class MOTD(Text):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
         self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
+        try:
+            self.font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
+        except TclError:
+            self.font = font.Font(family="Minecraft AE")
 
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
         self.delete("1.0", END)
         for extra in data.description_json:
+            tag_font = self.font
             try:
-                tag_font = Font(family="Unifont", size=12)
                 if extra.get("color"):
                     if "#" not in extra["color"]:
                         color = color_map_hex[extra["color"]]
@@ -46,7 +52,8 @@ class MOTD(Text):
                 if extra.get("underline") or extra.get("underlined"):
                     self.tag_configure("_", underline=True)
                 if extra.get("bold"):
-                    tag_font.config(family="宋体", weight="bold")
+                    # tag_font.config(family="宋体", weight="bold")
+                    tag_font.config(weight="bold")
                 elif extra.get("italic"):
                     tag_font.config(slant="italic")
                 elif extra.get("strikethrough"):

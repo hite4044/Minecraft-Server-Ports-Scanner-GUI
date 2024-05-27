@@ -13,18 +13,6 @@ def set_default_font():
     font.nametofont("TkDefaultFont").config(family="微软雅黑", size=10)
 
 
-def load_unifont():
-    from pyglet import options
-    from pyglet.font import add_file
-
-    if not exists("assets/Unifont.otf"):  # 若字体文件不存在则退出
-        print("Unifont字体文件丢失", file=stderr)
-        return
-
-    options['win32_gdi_font'] = True
-    add_file("assets/Unifont.otf")
-
-
 class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
@@ -61,7 +49,6 @@ class GUI(Window):
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
-        Thread(target=load_unifont).start()  # 加载字体
 
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
