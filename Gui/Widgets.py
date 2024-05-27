@@ -63,14 +63,14 @@ class MOTD(Text):
 
     def set_font(self):
         if Vars.user_settings_loader.configs['use_legacy_font']:
-            try:
+            if "Unifont" not in font.families():
                 custom_font = Font(file="assets/Unifont.otf", family="Unifont")
-            except TclError:
+            else:
                 custom_font = font.Font(family="Unifont")
         else:
-            try:
+            if "Minecraft AE" not in font.families():
                 custom_font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
-            except TclError:
+            else:
                 custom_font = font.Font(family="Minecraft AE")
 
         return custom_font
