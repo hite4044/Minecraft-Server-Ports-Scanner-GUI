@@ -10,14 +10,14 @@ from Libs.Vars import *
 
 
 def set_default_font():
-    font.nametofont("TkDefaultFont").config(family="微软雅黑", size=10)
+    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['font'], size=10)
 
 
 class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
-        self.configure(font=("微软雅黑", 24))
+        self.configure(font=(Vars.user_settings_loader.configs['font'], 24))
 
 
 class TitleBar(Frame):

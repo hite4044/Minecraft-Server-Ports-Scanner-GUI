@@ -12,7 +12,8 @@ class SettingsFrame(Frame):
             "if_version_name_shown_as_label": "将 VersionName 显示为纯文本格式",
             "theme_name": "主题 ( 不建议在此处修改 )",
             "ping_before_scan": "扫描之前先检测连通性",
-            "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )"
+            "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )",
+            "font": "字体"
         }
 
         self.bool_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
@@ -39,7 +40,7 @@ class SettingsFrame(Frame):
             string_var.set(user_settings_loader.configs[i])
             self.string_settings_vars.append(string_var)
             self.string_settings_label.append(
-                Label(self.button_frame, text=self.language_support[i])
+                Label(self.button_frame, text=self.language_support.get(i, i))
             )
             self.string_settings_entry.append(
                 Entry(self.button_frame, textvariable=string_var)

@@ -225,7 +225,7 @@ class ServerList(LabelFrame):
         self.server_filter = ServerFilter(self)  # 服务器筛选器
         self.sep = Separator(self, orient=HORIZONTAL)  # 分割线
         self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
-        self.empty_tip = Label(self, text="没有服务器", font=("微软雅黑", 25))  # 无服务器提示
+        self.empty_tip = Label(self, text="没有服务器", font=(Vars.user_settings_loader.configs['font'], 25))  # 提示
         self.record_bar = RecordBar(self, self)  # 保存加载功能
         self.servers_info = ServerInfoFrame(self.record_bar)  # 服务器数量信息
 
@@ -331,7 +331,7 @@ class ServerFrame(Frame):
 
         self.favicon = Label(self)
         self.MOTD = MOTD(self)
-        self.base_info = Label(self, font=("微软雅黑", 9))
+        self.base_info = Label(self, font=(Vars.user_settings_loader.configs['font'], 9))
 
         self.events_add()
         self.pack_weights()

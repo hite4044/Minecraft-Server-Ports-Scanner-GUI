@@ -4,7 +4,7 @@ from math import ceil
 from queue import Queue
 from threading import Lock, Thread
 from time import strftime, localtime, time, sleep
-from tkinter import Misc, Event, TclError
+from tkinter import Misc, Event
 from tkinter.font import Font
 from typing import Any, List
 
@@ -32,7 +32,7 @@ class MOTD(Text):
 
         self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
 
-        self.font = self.set_font()
+        self.font = self.return_font()
 
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
@@ -61,7 +61,8 @@ class MOTD(Text):
                 print("MOTD Data Extra Error:", extra, e)
         self.configure(state=DISABLED)
 
-    def set_font(self):
+    @staticmethod
+    def return_font():
         if Vars.user_settings_loader.configs['use_legacy_font']:
             if "Unifont" not in font.families():
                 custom_font = Font(file="assets/Unifont.otf", family="Unifont")
