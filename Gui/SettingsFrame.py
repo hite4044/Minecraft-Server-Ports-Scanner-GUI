@@ -11,7 +11,8 @@ class SettingsFrame(Frame):
         self.language_support = {
             "if_version_name_shown_as_label": "将 VersionName 显示为纯文本格式",
             "theme_name": "主题 ( 不建议在此处修改 )",
-            "ping_before_scan": "扫描之前先检测连通性"
+            "ping_before_scan": "扫描之前先检测连通性",
+            "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )"
         }
 
         self.bool_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
@@ -24,7 +25,7 @@ class SettingsFrame(Frame):
             boolean_var.set(user_settings_loader.configs[i])
             self.boolean_settings_vars.append(boolean_var)
             self.boolean_settings_ratio_buttons.append(
-                Checkbutton(self.button_frame, name=i, text=self.language_support[i],
+                Checkbutton(self.button_frame, name=i, text=self.language_support.get(i, i),  # 若无汉化则使用其原本的名字
                             variable=boolean_var,
                             onvalue=True,
                             offvalue=False))

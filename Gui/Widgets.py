@@ -31,16 +31,13 @@ class MOTD(Text):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
         self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
-        try:
-            self.font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
-        except TclError:
-            self.font = font.Font(family="Minecraft AE")
+
+        self.font = self.set_font()
 
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
         self.delete("1.0", END)
         for extra in data.description_json:
-            tag_font = self.font
             try:
                 if extra.get("color"):
                     if "#" not in extra["color"]:
@@ -52,18 +49,31 @@ class MOTD(Text):
                 if extra.get("underline") or extra.get("underlined"):
                     self.tag_configure("_", underline=True)
                 if extra.get("bold"):
-                    # tag_font.config(family="宋体", weight="bold")
-                    tag_font.config(weight="bold")
+                    self.font.config(weight="bold")
                 elif extra.get("italic"):
-                    tag_font.config(slant="italic")
+                    self.font.config(slant="italic")
                 elif extra.get("strikethrough"):
-                    tag_font.config(overstrike=True)
+                    self.font.config(overstrike=True)
 
-                self.tag_configure("_", font=tag_font, justify=LEFT)
+                self.tag_configure("_", font=self.font, justify=LEFT)
                 self.insert(END, extra["text"], "_")
             except TimeoutError as e:
                 print("MOTD Data Extra Error:", extra, e)
         self.configure(state=DISABLED)
+
+    def set_font(self):
+        if Vars.user_settings_loader.configs['use_legacy_font']:
+            try:
+                custom_font = Font(file="assets/Unifont.otf", family="Unifont")
+            except TclError:
+                custom_font = font.Font(family="Unifont")
+        else:
+            try:
+                custom_font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
+            except TclError:
+                custom_font = font.Font(family="Minecraft AE")
+
+        return custom_font
 
 
 class EntryScaleFrame(Frame):
