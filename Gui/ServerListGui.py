@@ -167,7 +167,8 @@ class RecordBar(Frame):
         """
         加载服务器记录
 
-        @param data: 服务器信息
+        Args:
+            data: 服务器信息
         """
         # 检查数据中是否存在必需的键
         if "servers" not in data:

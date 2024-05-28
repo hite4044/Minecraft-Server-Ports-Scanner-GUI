@@ -1,3 +1,5 @@
+import sys
+
 from ttkbootstrap.scrolled import ScrolledFrame
 
 from Gui.Widgets import *
@@ -13,7 +15,8 @@ class SettingsFrame(Frame):
             "theme_name": "主题 ( 不建议在此处修改 )",
             "ping_before_scan": "扫描之前先检测连通性",
             "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )",
-            "font": "字体"
+            "font": "字体",
+            "max_thread_number": "扫描时允许的最大线程数"
         }
 
         self.bool_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
@@ -45,6 +48,21 @@ class SettingsFrame(Frame):
             self.string_settings_entry.append(
                 Entry(self.button_frame, textvariable=string_var)
             )
+        self.int_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
+                            type(user_settings_loader.configs[i]) is int}
+        self.int_settings_vars: List[IntVar] = []
+        self.int_settings_label: List[Label] = []
+        self.int_settings_spinbox: List[Spinbox] = []
+        for i in self.int_configs:
+            int_var = IntVar(name=i)
+            int_var.set(user_settings_loader.configs[i])
+            self.int_settings_vars.append(int_var)
+            self.int_settings_label.append(
+                Label(self.button_frame, text=self.language_support.get(i, i))
+            )
+            self.int_settings_spinbox.append(
+                Spinbox(self.button_frame, textvariable=int_var, to=sys.maxsize)
+            )
         self.confirm_button = Button(self, text="保存更改", command=self.confirm)
         self.update_button = Button(self, text="更新", command=self.update_settings)
 
@@ -60,6 +78,10 @@ class SettingsFrame(Frame):
             self.string_settings_entry[i].grid(column=1, row=row, sticky=W)
             self.string_settings_label[i].grid(column=0, row=row, sticky=W)
             row += 1
+        for i in range(len(self.int_settings_spinbox)):
+            self.int_settings_spinbox[i].grid(column=1, row=row, sticky=W)
+            self.int_settings_label[i].grid(column=0, row=row, sticky=W)
+            row += 1
         self.confirm_button.pack(anchor=SE, side=RIGHT)
         self.update_button.pack(anchor=SE, side=RIGHT)
 
@@ -67,6 +89,8 @@ class SettingsFrame(Frame):
         for i in self.boolean_settings_vars:
             user_settings_loader.configs[i._name] = i.get()  # 貌似只能这么解决, _name 在 BooleanVar 里是 protected
         for i in self.string_settings_vars:
+            user_settings_loader.configs[i._name] = i.get()
+        for i in self.int_settings_vars:
             user_settings_loader.configs[i._name] = i.get()
 
     def update_settings(self):

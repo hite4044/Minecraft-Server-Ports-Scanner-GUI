@@ -63,6 +63,14 @@ class MOTD(Text):
 
     @staticmethod
     def return_font():
+        """
+        根据设置界面返回实例化字体
+
+        Returns:
+            根据设置界面得到的实例化后的字体
+        Notes:
+            有概率会引发 RuntimeError, 原因未知
+        """
         if Vars.user_settings_loader.configs['use_legacy_font']:
             if "Unifont" not in font.families():
                 custom_font = Font(file="assets/Unifont.otf", family="Unifont")
