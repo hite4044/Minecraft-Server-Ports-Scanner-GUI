@@ -6,8 +6,6 @@
 
 </div>
 
----
-
 Language:
 
 1. [简体中文](../README.md)
