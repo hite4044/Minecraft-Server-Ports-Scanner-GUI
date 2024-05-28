@@ -40,7 +40,6 @@ Our QQ channel is `153037480` named `MCSPS交流群`. If you have any problems a
     * Advanced port range adjustment control
     * Server versions filtering available
 * Information displaying
-    * 美丽的彩色标题解析
     * Beautiful colorful title parse
     * Minecraft fonts
     * Player UUID displayed
