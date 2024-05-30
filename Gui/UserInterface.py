@@ -14,14 +14,12 @@ def set_default_font():
 
 
 def load_unifont():
-    from pyglet import options
     from pyglet.font import add_file
 
     if not exists("assets/Unifont.otf"):  # 若字体文件不存在则退出
         print("Unifont字体文件丢失", file=stderr)
         return
 
-    options['win32_gdi_font'] = True
     add_file("assets/Unifont.otf")
 
 
