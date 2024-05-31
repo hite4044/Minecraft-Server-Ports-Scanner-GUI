@@ -101,15 +101,17 @@ class ServerScanner:
 
     def scan_a_port(self, host: str, port: int, callback: Any):
         raw_info = Port(host, port, self.timeout).get_server_info()
-        if raw_info["status"] == "online":
-            Thread(target=callback, args=(ServerInfo(raw_info["info"]),)).start()
-            return
-        Thread(target=self._callback, args=(raw_info, callback)).start()
+        Thread(target=self._callback, args=(raw_info, callback), daemon=True).start()
 
     def _callback(self, raw_info, callback: Any):
         with self.callback_count_lock:
             self.callback_count += 1
-        callback(raw_info)
+        try:
+            if raw_info["status"] == "online":
+                raw_info = ServerInfo(raw_info["info"])
+            callback(raw_info)
+        except RuntimeError:  # TK窗口已销毁
+            pass
         with self.callback_count_lock:
             self.callback_count -= 1
 
