@@ -5,6 +5,7 @@ from time import perf_counter
 from Gui.ScanBarGui import ScanBar
 from Gui.ServerListGui import ServerList
 from Gui.SettingsFrame import SettingsFrame
+from Libs.Vars import main_thread_over
 from Gui.Widgets import *
 from Libs.Vars import *
 
@@ -14,13 +15,13 @@ def set_default_font():
 
 
 def load_unifont():
-    from pyglet.font import add_file
+    from Libs.FontLoader import add_font
 
-    if not exists("assets/Unifont.otf"):  # 若字体文件不存在则退出
+    try:
+        add_font("assets/Unifont.otf")
+    except FileNotFoundError:  # 若字体文件不存在则退出
         print("Unifont字体文件丢失", file=stderr)
         return
-
-    add_file("assets/Unifont.otf")
 
 
 class Title(Label):
@@ -75,6 +76,7 @@ class GUI(Window):
             print("图标文件丢失", file=stderr)
 
     def on_delete_window(self):
+        # FIXME 扫描时结束任务会报错
         # user_settings_loader.configs['theme_name'] = Style().theme_use()
         self.scan_bar.close_save_config()
         UserSettingsSaver.save_user_configs(user_settings_loader)
