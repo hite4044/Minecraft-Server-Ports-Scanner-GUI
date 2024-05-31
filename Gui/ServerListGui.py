@@ -185,7 +185,8 @@ class RecordBar(Frame):
                 server_info: ServerInfo = pickle_loads(b64decode(server_obj_bytes))
                 server_info.load_favicon_photo()
                 self.server_list.add_server(server_info)
-                del sys.modules['scanner']
+        if "scanner" in sys.modules:
+            del sys.modules["scanner"]  # 删除先前为了修复问题而引入的 scanner
 
     def save_record(self):
         # noinspection PyUnresolvedReferences
