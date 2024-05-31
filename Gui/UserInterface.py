@@ -10,7 +10,7 @@ from Libs.Vars import *
 
 
 def set_default_font():
-    font.nametofont("TkDefaultFont").config(family="微软雅黑", size=10)
+    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['font'], size=10)
 
 
 def load_unifont():
@@ -27,7 +27,7 @@ class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
-        self.configure(font=("微软雅黑", 24))
+        self.configure(font=(Vars.user_settings_loader.configs['font'], 24))
 
 
 class TitleBar(Frame):
@@ -59,7 +59,6 @@ class GUI(Window):
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
-        Thread(target=load_unifont).start()  # 加载字体
 
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题

@@ -1,3 +1,5 @@
+import sys
+
 from ttkbootstrap.scrolled import ScrolledFrame
 
 from Gui.Widgets import *
@@ -32,7 +34,10 @@ class SettingsFrame(Frame):
         self.language_support = {
             "if_version_name_shown_as_label": "将 VersionName 显示为纯文本格式",
             "theme_name": "主题 ( 不建议在此处修改 )",
-            "ping_before_scan": "扫描之前先检测连通性"
+            "ping_before_scan": "扫描之前先检测连通性",
+            "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )",
+            "font": "字体",
+            "max_thread_number": "扫描时允许的最大线程数"
         }
 
         self.config_frame = ScrolledFrame(self)
@@ -50,6 +55,10 @@ class SettingsFrame(Frame):
         row = 0
         for sitting_frame in self.configs.values():
             sitting_frame.grid(row=row, column=0, sticky=W)
+            row += 1
+        for i in range(len(self.int_settings_spinbox)):
+            self.int_settings_spinbox[i].grid(column=1, row=row, sticky=W)
+            self.int_settings_label[i].grid(column=0, row=row, sticky=W)
             row += 1
         self.confirm_button.pack(anchor=SE, side=RIGHT)
         self.update_button.pack(anchor=SE, side=RIGHT, padx=5)

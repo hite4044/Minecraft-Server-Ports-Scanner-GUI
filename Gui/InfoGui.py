@@ -73,7 +73,8 @@ class InfoWindow(Toplevel, Infer):
         """
         将一个 PIL.ImageTK.PhotoImage 加载为 GUI 图标
 
-        @param favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
+        Args:
+            favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
         """
         self.iconphoto(True, favicon)
 

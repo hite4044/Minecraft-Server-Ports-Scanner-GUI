@@ -197,7 +197,8 @@ class UserSettingsLoader:
 
     @staticmethod
     def defaults() -> Dict:
-        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly", 'ping_before_scan': True}
+        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly", 'ping_before_scan': True,
+                'use_legacy_font': False, "font": "微软雅黑", "max_thread_number": 256}
 
 
 class UserSettingsSaver:

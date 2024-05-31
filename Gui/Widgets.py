@@ -1,20 +1,22 @@
 # -*- coding: UTF-8 -*-
+from copy import copy
 from math import ceil
 from queue import Queue
-from ttkbootstrap import *
-from typing import Any, List
-from tkinter.font import Font
-from tkinter import Misc, Event
 from threading import Lock, Thread
-from ttkbootstrap.constants import *
-from pyperclip import copy as copy_clipboard
 from time import strftime, localtime, time, sleep
-from copy import copy
+from tkinter import Misc, Event
+from tkinter.font import Font
+from typing import Any, List
+
+from pyperclip import copy as copy_clipboard
+from tkextrafont import Font
+from ttkbootstrap import *
+from ttkbootstrap.constants import *
 
 from Libs import Vars
+from Libs.ColorLib import Color
 from Libs.Vars import scale_rater, color_map_hex
 from Network.Scanner import ServerInfo
-from Libs.ColorLib import Color
 
 ERROR = "error"
 DEBUG = "debug"
@@ -30,12 +32,13 @@ class MOTD(Text):
 
         self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
 
+        self.font = self.return_font()
+
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
         self.delete("1.0", END)
         for extra in data.description_json:
             try:
-                tag_font = Font(family="Unifont", size=12)
                 if extra.get("color"):
                     if "#" not in extra["color"]:
                         color = color_map_hex[extra["color"]]
@@ -46,17 +49,40 @@ class MOTD(Text):
                 if extra.get("underline") or extra.get("underlined"):
                     self.tag_configure("_", underline=True)
                 if extra.get("bold"):
-                    tag_font.config(family="宋体", weight="bold")
+                    self.font.config(weight="bold")
                 elif extra.get("italic"):
-                    tag_font.config(slant="italic")
+                    self.font.config(slant="italic")
                 elif extra.get("strikethrough"):
-                    tag_font.config(overstrike=True)
+                    self.font.config(overstrike=True)
 
-                self.tag_configure("_", font=tag_font, justify=LEFT)
+                self.tag_configure("_", font=self.font, justify=LEFT)
                 self.insert(END, extra["text"], "_")
             except TimeoutError as e:
                 print("MOTD Data Extra Error:", extra, e)
         self.configure(state=DISABLED)
+
+    @staticmethod
+    def return_font():
+        """
+        根据设置界面返回实例化字体
+
+        Returns:
+            根据设置界面得到的实例化后的字体
+        Notes:
+            有概率会引发 RuntimeError, 原因未知
+        """
+        if Vars.user_settings_loader.configs['use_legacy_font']:
+            if "Unifont" not in font.families():
+                custom_font = Font(file="assets/Unifont.otf", family="Unifont")
+            else:
+                custom_font = font.Font(family="Unifont")
+        else:
+            if "Minecraft AE" not in font.families():
+                custom_font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
+            else:
+                custom_font = font.Font(family="Minecraft AE")
+
+        return custom_font
 
 
 class EntryScaleFrame(Frame):

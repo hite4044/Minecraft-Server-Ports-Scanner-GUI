@@ -45,7 +45,10 @@ class ScanBar(LabelFrame):
         self.input_frame = Frame(self)
         self.host_input = TextCombobox(self.input_frame, "域名: ", server_addresses)
         self.timeout_input = EntryScaleFloatFrame(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
-        self.thread_num_input = EntryScaleIntFrame(self.input_frame, 1, 256, 192, "线程数: ")
+        self.thread_num_input = EntryScaleIntFrame(self.input_frame, 1,
+                                                   Vars.user_settings_loader.configs["max_thread_number"],
+                                                   1,
+                                                   "线程数: ")
         self.range_input = RangeSelector(self.input_frame, "端口选择: ", 1024, 65535)
 
         self.input_frame.pack(side=LEFT, fill=X, expand=True, padx=5, pady=5)
