@@ -5,15 +5,17 @@ from io import BytesIO
 from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
-from typing import List, Any, Dict, Literal, Union
+from typing import List, Any, Dict, Literal, Union, Tuple
 
 from PIL import Image, ImageTk
+from PIL.ImageTk import PhotoImage
 
 from Libs import Vars
 
 ServerPinger: Any = None
 Address: Any = None
 TCPSocketConnection: Any = None
+_MaxUnknown = str
 
 
 def import_mcstatus():
@@ -221,6 +223,7 @@ class ServerInfo:
         self.player_max, self.player_online, self.players = self.parse_player_info()
 
         # 服务器图标信息
+        self.favicon = None
         self.favicon_data, self.favicon_photo, self.has_favicon = self.parse_icon_info()
 
         # 服务器标题
@@ -261,15 +264,15 @@ class ServerInfo:
     def __str__(self) -> str:
         return self.text
 
-    def load_favicon_photo(self, has_favicon: bool = True, favicon_data=None, load_from_self=True) -> Union[
-        ImageTk.PhotoImage, None]:
+    def load_favicon_photo(self, has_favicon: bool = True, favicon_data=None, load_from_self=True) ->\
+            Union[ImageTk.PhotoImage, None]:
         if not load_from_self:
             if has_favicon:
-                favicon = Image.open(BytesIO(favicon_data), formats=["PNG"])
-                return ImageTk.PhotoImage(favicon)
+                self.favicon = Image.open(BytesIO(favicon_data), formats=["PNG"])
+                return ImageTk.PhotoImage(self.favicon)
         elif self.has_favicon:
-            favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
-            self.favicon_photo = ImageTk.PhotoImage(favicon)
+            self.favicon = Image.open(BytesIO(self.favicon_data), formats=["PNG"])
+            self.favicon_photo = ImageTk.PhotoImage(self.favicon)
         return None
 
     def parse_version_info(self):
@@ -291,9 +294,7 @@ class ServerInfo:
         return version_name, protocol_version, protocol_info, protocol_name, protocol_major_name, version_type
 
     def parse_player_info(self):
-        # 如果你的 IDE 提示我的类型注释不对, 那就是 IDE 的问题
-        # 类型注释是正确的, 一层套一层导致 IDE 爆炸了 ( 其实是因为 self.parsed_data 没有做也很难做类型注释 )
-        player_max: Union[int, Literal["未知"]] = self.parsed_data.get("players", {"max": "未知"})["max"]
+        player_max: Union[int, _MaxUnknown] = self.parsed_data.get("players", {"max": "未知"})["max"]
         player_number = self.parsed_data.get("players", {"online": "未知"})["online"]
         if self.parsed_data.get("players", {}).get("sample"):
             player_list: List = self.parsed_data["players"]["sample"]

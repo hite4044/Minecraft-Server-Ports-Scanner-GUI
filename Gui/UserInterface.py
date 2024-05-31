@@ -5,7 +5,6 @@ from time import perf_counter
 from Gui.ScanBarGui import ScanBar
 from Gui.ServerListGui import ServerList
 from Gui.SettingsFrame import SettingsFrame
-from Libs.Vars import main_thread_over
 from Gui.Widgets import *
 from Libs.Vars import *
 
@@ -71,7 +70,8 @@ class GUI(Window):
 
     def set_icon(self):
         if exists("assets/icon.ico"):
-            self.wm_iconbitmap("assets/icon.ico")
+            self._icon.icon = ImageTk.PhotoImage(file="assets/icon.ico")
+            self.iconphoto(True, self._icon.icon)
         else:
             print("图标文件丢失", file=stderr)
 

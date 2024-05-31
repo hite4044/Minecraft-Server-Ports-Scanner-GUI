@@ -3,6 +3,7 @@ from tkinter import Listbox
 from tkinter.messagebox import showinfo
 
 from ttkbootstrap.tooltip import ToolTip
+from io import BytesIO
 
 from Gui.Widgets import *
 from Libs.Vars import user_settings_loader
@@ -42,12 +43,17 @@ class InfoWindow(Toplevel, Infer):
         self.pack_widgets()
 
     def load_data(self, data: ServerInfo):
-        favicon = self.data.favicon_photo if data.has_favicon \
-            else ImageTk.PhotoImage(file=r"assets\server_icon.png")
-        self.favicon.configure(image=favicon)
+        if data.has_favicon:
+            self.favicon.image_io = BytesIO(data.favicon_data)
+        else:
+            with open(r"assets\server_icon.png", "rb") as f:
+                self.favicon.image_io = BytesIO(f.read())
+        self.favicon.image = Image.open(self.favicon.image_io, formats=["PNG"])
+        self.favicon.image = self.favicon.image.resize((128, 128))
+        self.favicon.favicon = ImageTk.PhotoImage(self.favicon.image)
+        self.favicon.configure(image=self.favicon.favicon)
         # 将 favicon 引用传递给 self.favicon.image, 使其变成 self.favicon 的属性, 防止其被 gc 回收
-        self.favicon.image = favicon
-        self.load_icon(favicon)
+        self.load_icon(self.favicon.favicon)
 
         self.data = data
         self.MOTD.load_motd(self.data)
@@ -69,7 +75,7 @@ class InfoWindow(Toplevel, Infer):
 
         @param favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
         """
-        self.iconphoto(False, favicon)
+        self.iconphoto(True, favicon)
 
     def pack_widgets(self):
         self.favicon.pack_configure()
