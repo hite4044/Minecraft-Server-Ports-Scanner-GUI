@@ -66,7 +66,6 @@ class GUI(Window):
 
     def on_delete_window(self):
         # FIXME 扫描时结束任务会报错
-        # user_settings_loader.configs['theme_name'] = Style().theme_use()
         self.scan_bar.close_save_config()
         UserSettingsSaver.save_user_configs(user_settings_loader)
         self.destroy()
