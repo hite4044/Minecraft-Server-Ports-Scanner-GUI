@@ -10,24 +10,14 @@ from Libs.Vars import *
 
 
 def set_default_font():
-    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['font'], size=10)
-
-
-def load_unifont():
-    from Libs.FontLoader import add_font
-
-    try:
-        add_font("assets/Unifont.otf")
-    except FileNotFoundError:  # 若字体文件不存在则退出
-        print("Unifont字体文件丢失", file=stderr)
-        return
+    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['global_font'], size=10)
 
 
 class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
-        self.configure(font=(Vars.user_settings_loader.configs['font'], 24))
+        self.configure(font=(Vars.user_settings_loader.configs['global_font'], 24))
 
 
 class TitleBar(Frame):
