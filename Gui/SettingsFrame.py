@@ -47,7 +47,7 @@ class SettingsFrame(Frame):
         self.config_frame = ScrolledFrame(self)
         self.configs = {}
         for name, value in user_settings_loader.configs.items():
-            self.configs[name] = SettingFrame(self.config_frame, self.language_support[name], name, value)
+            self.configs[name] = SettingFrame(self.config_frame, self.language_support.get(name, name+' ( 不生效 ) '), name, value)
 
         self.confirm_button = Button(self, text="保存更改", command=self.confirm)
         self.update_button = Button(self, text="更新", command=self.update_settings)

@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import json
+import warnings
 from os import mkdir
 from os.path import join as path_join, isfile, exists
 from typing import List, Dict
@@ -196,14 +197,10 @@ class UserSettingsLoader:
         if not exists(self.config_path):
             return
         with open(self.config_path, "r", encoding="utf-8") as f:
-            self.configs = {**self.configs, **json.load(f)}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
-        for name, value in self.configs.items():  # 旧版适配防报错
-            if name == "font":
-                self.configs.pop(name)
-                self.configs["global_font"] = value
-            elif name == "use_legacy_font":
-                self.configs.pop(name)
-                self.configs["MOTD_use_unicode_font"] = value
+            json_configs: Dict = json.load(f)
+            if self.configs.items() != json_configs.items():
+                warnings.warn(f"可能存在潜在的设置信息不兼容问题. 以下是 user_configs.json 中的内容: {json_configs}")
+            self.configs = {**self.configs, **json_configs}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
 
     @staticmethod
     def defaults() -> Dict:
