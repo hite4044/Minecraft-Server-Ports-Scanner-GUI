@@ -198,7 +198,7 @@ class UserSettingsLoader:
             return
         with open(self.config_path, "r", encoding="utf-8") as f:
             json_configs: Dict = json.load(f)
-            if self.configs.items() != json_configs.items():
+            if self.configs.keys() != json_configs.keys():
                 warnings.warn(f"可能存在潜在的设置信息不兼容问题. 以下是 user_configs.json 中的内容: {json_configs}")
             self.configs = {**self.configs, **json_configs}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
 
