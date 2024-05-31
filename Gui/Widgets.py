@@ -71,7 +71,7 @@ class MOTD(Text):
         Notes:
             有概率会引发 RuntimeError, 原因未知
         """
-        if Vars.user_settings_loader.configs['use_legacy_font']:
+        if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
             if "Unifont" not in font.families():
                 custom_font = Font(file="assets/Unifont.otf", family="Unifont")
             else:

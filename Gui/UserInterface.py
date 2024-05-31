@@ -10,14 +10,14 @@ from Libs.Vars import *
 
 
 def set_default_font():
-    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['font'], size=10)
+    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['global_font'], size=10)
 
 
 class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master)
         self.configure(text="Minecraft服务器扫描器")
-        self.configure(font=(Vars.user_settings_loader.configs['font'], 24))
+        self.configure(font=(Vars.user_settings_loader.configs['global_font'], 24))
 
 
 class TitleBar(Frame):
@@ -59,11 +59,13 @@ class GUI(Window):
 
     def set_icon(self):
         if exists("assets/icon.ico"):
-            self.wm_iconbitmap("assets/icon.ico")
+            self._icon.icon = ImageTk.PhotoImage(file="assets/icon.ico")
+            self.iconphoto(True, self._icon.icon)
         else:
             print("图标文件丢失", file=stderr)
 
     def on_delete_window(self):
+        # FIXME 扫描时结束任务会报错
         # user_settings_loader.configs['theme_name'] = Style().theme_use()
         self.scan_bar.close_save_config()
         UserSettingsSaver.save_user_configs(user_settings_loader)

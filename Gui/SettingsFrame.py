@@ -1,9 +1,34 @@
 import sys
+import ttkbootstrap
 
 from ttkbootstrap.scrolled import ScrolledFrame
 
 from Gui.Widgets import *
 from Libs.Vars import user_settings_loader
+
+
+class SettingFrame(Frame):
+    def __init__(self, master: Misc, text: str, name: str, value: Any):
+        super().__init__(master)
+        self.name = name
+        self.label = Label(self, text=text)
+        if isinstance(value, bool):
+            self.variable = BooleanVar(self, value=value, name=name)
+            self.widget = Checkbutton(self, variable=self.variable, onvalue=True, offvalue=False)
+        elif isinstance(value, str):
+            self.variable = StringVar(self, value=value, name=name)
+            self.widget = Entry(self, textvariable=self.variable)
+        elif isinstance(value, int):
+            self.variable = IntVar(self, value=value, name=name)
+            self.widget = ttkbootstrap.Spinbox(self, textvariable=self.variable, to=sys.maxsize)
+        self.label.pack(side=LEFT)
+        self.widget.pack(side=LEFT, padx=5)
+
+    def get(self):
+        return self.variable.get()
+
+    def set(self, value: Any):
+        self.variable.set(value)
 
 
 class SettingsFrame(Frame):
@@ -14,93 +39,34 @@ class SettingsFrame(Frame):
             "if_version_name_shown_as_label": "将 VersionName 显示为纯文本格式",
             "theme_name": "主题 ( 不建议在此处修改 )",
             "ping_before_scan": "扫描之前先检测连通性",
-            "use_legacy_font": "使用原先的旧版字体 ( 任何渲染问题开发者没有义务修复 )",
-            "font": "字体",
-            "max_thread_number": "扫描时允许的最大线程数"
+            "global_font": "字体",
+            "max_thread_number": "扫描时允许的最大线程数",
+            "MOTD_use_unicode_font": "MOTD全部使用Unifont字体显示"
         }
 
-        self.bool_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
-                             type(user_settings_loader.configs[i]) is bool}
-        self.button_frame = ScrolledFrame(self)
-        self.boolean_settings_vars: List[BooleanVar] = []
-        self.boolean_settings_ratio_buttons: List[Checkbutton] = []
-        for i in self.bool_configs:
-            boolean_var = BooleanVar(name=i)
-            boolean_var.set(user_settings_loader.configs[i])
-            self.boolean_settings_vars.append(boolean_var)
-            self.boolean_settings_ratio_buttons.append(
-                Checkbutton(self.button_frame, name=i, text=self.language_support.get(i, i),  # 若无汉化则使用其原本的名字
-                            variable=boolean_var,
-                            onvalue=True,
-                            offvalue=False))
-        self.string_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
-                               type(user_settings_loader.configs[i]) is str}
-        self.string_settings_vars: List[StringVar] = []
-        self.string_settings_label: List[Label] = []
-        self.string_settings_entry: List[Entry] = []
-        for i in self.string_configs:
-            string_var = StringVar(name=i)
-            string_var.set(user_settings_loader.configs[i])
-            self.string_settings_vars.append(string_var)
-            self.string_settings_label.append(
-                Label(self.button_frame, text=self.language_support.get(i, i))
-            )
-            self.string_settings_entry.append(
-                Entry(self.button_frame, textvariable=string_var)
-            )
-        self.int_configs = {i: user_settings_loader.configs[i] for i in user_settings_loader.configs if
-                            type(user_settings_loader.configs[i]) is int}
-        self.int_settings_vars: List[IntVar] = []
-        self.int_settings_label: List[Label] = []
-        self.int_settings_spinbox: List[Spinbox] = []
-        for i in self.int_configs:
-            int_var = IntVar(name=i)
-            int_var.set(user_settings_loader.configs[i])
-            self.int_settings_vars.append(int_var)
-            self.int_settings_label.append(
-                Label(self.button_frame, text=self.language_support.get(i, i))
-            )
-            self.int_settings_spinbox.append(
-                Spinbox(self.button_frame, textvariable=int_var, to=sys.maxsize)
-            )
+        self.config_frame = ScrolledFrame(self)
+        self.configs = {}
+        for name, value in user_settings_loader.configs.items():
+            self.configs[name] = SettingFrame(self.config_frame, self.language_support[name], name, value)
+
         self.confirm_button = Button(self, text="保存更改", command=self.confirm)
         self.update_button = Button(self, text="更新", command=self.update_settings)
 
         self.pack_widgets()
 
     def pack_widgets(self):
-        row: int = 0
-        self.button_frame.pack(side=TOP, anchor=NW, fill=X)
-        for i in range(len(self.boolean_settings_ratio_buttons)):
-            self.boolean_settings_ratio_buttons[i].grid(column=0, row=row, sticky=W)
-            row += 1
-        for i in range(len(self.string_settings_entry)):
-            self.string_settings_entry[i].grid(column=1, row=row, sticky=W)
-            self.string_settings_label[i].grid(column=0, row=row, sticky=W)
-            row += 1
-        for i in range(len(self.int_settings_spinbox)):
-            self.int_settings_spinbox[i].grid(column=1, row=row, sticky=W)
-            self.int_settings_label[i].grid(column=0, row=row, sticky=W)
+        self.config_frame.pack(fill=BOTH, expand=True)
+        row = 0
+        for sitting_frame in self.configs.values():
+            sitting_frame.grid(row=row, column=0, sticky=W)
             row += 1
         self.confirm_button.pack(anchor=SE, side=RIGHT)
-        self.update_button.pack(anchor=SE, side=RIGHT)
+        self.update_button.pack(anchor=SE, side=RIGHT, padx=5)
 
     def confirm(self):
-        for i in self.boolean_settings_vars:
-            user_settings_loader.configs[i._name] = i.get()  # 貌似只能这么解决, _name 在 BooleanVar 里是 protected
-        for i in self.string_settings_vars:
-            user_settings_loader.configs[i._name] = i.get()
-        for i in self.int_settings_vars:
-            user_settings_loader.configs[i._name] = i.get()
+        for name, widget in self.configs.items():
+            user_settings_loader.configs[name] = widget.get()
 
     def update_settings(self):
-        self.boolean_settings_vars = []
-        self.string_settings_vars = []
-        for i in self.bool_configs:
-            boolean_var = BooleanVar(name=i)
-            boolean_var.set(user_settings_loader.configs[i])
-            self.boolean_settings_vars.append(boolean_var)
-        for i in self.string_configs:
-            string_var = StringVar(name=i)
-            string_var.set(user_settings_loader.configs[i])
-            self.string_settings_vars.append(string_var)
+        for name, widget in self.configs.items():
+            widget.set(user_settings_loader.configs[name])

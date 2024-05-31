@@ -129,6 +129,9 @@ class UserAddressOperator:
         global server_addresses
 
         try:
+            if not exists(UserAddressOperator.user_address_json):
+                with open(UserAddressOperator.user_address_json, "w+", encoding="utf-8") as f:
+                    f.write("{\n\t\"address_list\": []\n}")
             with open(UserAddressOperator.user_address_json, "r", encoding="utf-8") as rfp:
                 json_data: dict = json.loads(rfp.read())
                 address_list: List[str] = json_data.get('address_list')
@@ -194,11 +197,22 @@ class UserSettingsLoader:
             return
         with open(self.config_path, "r", encoding="utf-8") as f:
             self.configs = {**self.configs, **json.load(f)}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
+        for name, value in self.configs.items():  # 旧版适配防报错
+            if name == "font":
+                self.configs.pop(name)
+                self.configs["global_font"] = value
+            elif name == "use_legacy_font":
+                self.configs.pop(name)
+                self.configs["MOTD_use_unicode_font"] = value
 
     @staticmethod
     def defaults() -> Dict:
-        return {'if_version_name_shown_as_label': False, 'theme_name': "darkly", 'ping_before_scan': True,
-                'use_legacy_font': False, "font": "微软雅黑", "max_thread_number": 256}
+        return {'if_version_name_shown_as_label': False,
+                'theme_name': "darkly",
+                'ping_before_scan': True,
+                "global_font": "微软雅黑",
+                "max_thread_number": 256,
+                "MOTD_use_unicode_font": True}
 
 
 class UserSettingsSaver:
