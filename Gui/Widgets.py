@@ -1,7 +1,8 @@
 # -*- coding: UTF-8 -*-
-from copy import copy
+from copy import copy, deepcopy
 from math import ceil
 from queue import Queue
+from random import randint
 from threading import Lock, Thread
 from time import strftime, localtime, time, sleep
 from tkinter import Misc, Event
@@ -29,35 +30,33 @@ class MOTD(Text):
     def __init__(self, master: Misc):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
 
-        self.bind("<Button-1>", lambda _: "break")  # 让此 Text 的文字无法被选中
-
-        self.font = self.return_font()
+        self.base_font = self.return_font()
 
     def load_motd(self, data: ServerInfo):
         self.configure(state=NORMAL)
         self.delete("1.0", END)
         for extra in data.description_json:
-            try:
-                if extra.get("color"):
-                    if "#" not in extra["color"]:
-                        color = color_map_hex[extra["color"]]
-                    else:
-                        color = extra["color"]
-                    self.tag_configure("_", foreground=color)
+            tag = str(randint(0, 114514))
+            now_font = self.base_font.copy()
 
-                if extra.get("underline") or extra.get("underlined"):
-                    self.tag_configure("_", underline=True)
-                if extra.get("bold"):
-                    self.font.config(weight="bold")
-                elif extra.get("italic"):
-                    self.font.config(slant="italic")
-                elif extra.get("strikethrough"):
-                    self.font.config(overstrike=True)
+            if extra.get("color"):
+                if "#" not in extra["color"]:
+                    color = color_map_hex[extra["color"]]
+                else:
+                    color = extra["color"]
+                self.tag_configure(tag, foreground=color)
 
-                self.tag_configure("_", font=self.font, justify=LEFT)
-                self.insert(END, extra["text"], "_")
-            except TimeoutError as e:
-                print("MOTD Data Extra Error:", extra, e)
+            if extra.get("bold"):  # FIXME: MC的字体粗体方式为向右偏移一个像素, 但tkinter的字体粗体方式为向右偏移很多像素
+                now_font.config(weight="bold", family="宋体")
+            if extra.get("underline") or extra.get("underlined"):
+                self.tag_configure(tag, underline=True)
+            elif extra.get("italic"):
+                now_font.config(slant="italic")
+            elif extra.get("strikethrough"):
+                now_font.config(overstrike=True)
+
+            self.tag_configure(tag, font=now_font, justify=LEFT)
+            self.insert(END, extra["text"], tag)
         self.configure(state=DISABLED)
 
     @staticmethod
@@ -72,7 +71,6 @@ class MOTD(Text):
         """
         if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
             if "Unifont" not in font.families():
-                print("aa")
                 custom_font = Font(font="assets/Unifont.ttf", family="Unifont")
             else:
                 custom_font = font.Font(family="Unifont")
@@ -500,14 +498,21 @@ class ThemesSelector(Frame):
     def __init__(self, master: Misc):
         super(ThemesSelector, self).__init__(master)
         self.select_text = Label(self, text="选择主题:")
-        self.theme_selector = Combobox(self, values=Style().theme_names(), state=READONLY)
-        self.theme_selector.set(Style().theme_use())
+        self.theme_selector = Combobox(self, values=["主题加载中..."], state=READONLY)
+        self.theme_selector.set("主题加载中...")
         self.theme_selector.bind("<<ComboboxSelected>>", self.on_theme_selected)
         self.select_text.pack(side=LEFT, padx=5, pady=5)
         self.theme_selector.pack(side=LEFT, padx=5, pady=5)
+        self.style = None
+        self.after(500, self.thread_load_themes)
+
+    def thread_load_themes(self):
+        self.style = Style()
+        self.theme_selector.configure(values=self.style.theme_names())
+        self.theme_selector.set(self.style.theme_use())
 
     def on_theme_selected(self, _):
-        Style().theme_use(self.theme_selector.get())
+        self.style.theme_use(self.theme_selector.get())
         Vars.user_settings_loader.configs['theme_name'] = self.theme_selector.get()
 
 
