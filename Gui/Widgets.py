@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import tkinter.font
 from copy import copy
 from math import ceil
 from queue import Queue
@@ -84,6 +83,7 @@ class MOTD(Text):
                 custom_font = font.Font(family="Minecraft AE")
 
         return custom_font
+
 
 class EntryScaleFrame(Frame):
     def __init__(self, master: Misc, _min: Any, _max: Any, value: Any, text: str, fmt: Any):
@@ -193,7 +193,10 @@ class TextCombobox(Frame):
 
 
 class Tabs(Notebook):
-    pass
+    def __init__(self, master: Misc):
+        super(Tabs, self).__init__(master)
+
+        self.enable_traversal()
 
 
 class RangeScale(Canvas):
