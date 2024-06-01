@@ -39,5 +39,5 @@ class TaskbarApi:
     def set_progress_value(self, progress: int, maximum: int):
         self.taskbar.setProgressValue(self.hwnd, progress, maximum)
 
-    def flash_window(self, count: int = 3, interval: float = 0.5, flags: int = 3):
+    def flash_window(self, count: int = 3, interval: float = 0.5, flags: int = FLASHW.FLASHW_ALL):
         FlashWindowEx(self.hwnd, flags, count, int(interval * 1000))
