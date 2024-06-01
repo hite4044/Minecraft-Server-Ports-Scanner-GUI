@@ -31,7 +31,6 @@ class TaskbarApi:
         self.taskbar = CreateObject(
             "{56FDF344-FD6D-11d0-958A-006097C9A090}",
             interface=TaskbarLib.ITaskbarList3)
-        self.taskbar.ActivateTab(hwnd)
         self.taskbar.HrInit()
 
     def set_progress_state(self, state: TBPFLAG):
