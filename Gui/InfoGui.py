@@ -76,7 +76,7 @@ class InfoWindow(Toplevel, Infer):
         Args:
             favicon: 一个 PIL.ImageTK.PhotoImage 实例化对象
         """
-        self.iconphoto(True, favicon)
+        self.iconphoto(False, favicon)
 
     def pack_widgets(self):
         self.favicon.pack_configure()
