@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from sys import stderr
 from time import perf_counter
+load_timer = perf_counter()
 
 from Gui.ScanBarGui import ScanBar
 from Gui.ServerListGui import ServerList
@@ -8,6 +9,8 @@ from Gui.SettingsFrame import SettingsFrame
 from Gui.PortsRangeGui import PortsHotView
 from Gui.Widgets import *
 from Libs.Vars import *
+
+print(f"库加载时间: {perf_counter() - load_timer:.3f}秒")
 
 
 def set_default_font():
