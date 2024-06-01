@@ -9,6 +9,7 @@ from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
 from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
 
 from Gui.ServerListGui import ServerList
+from Gui.PortsRangeGui import PortsHotView
 from Gui.Widgets import *
 from Libs.TaskbarLib import *
 from Libs.Vars import *
@@ -16,7 +17,7 @@ from Network.Scanner import *
 
 
 class ScanBar(LabelFrame):
-    def __init__(self, master: Misc, logger: Logger, server_list: ServerList, gui):
+    def __init__(self, master: Misc, logger: Logger, server_list: ServerList, hot_view: PortsHotView, gui):
         super(ScanBar, self).__init__(master, text="扫描")
         self.logger = logger
         self.server_list = server_list
@@ -25,6 +26,7 @@ class ScanBar(LabelFrame):
 
         self.in_scan = False
         self.scan_obj = ServerScanner()
+        self.hot_view = hot_view
         self.callback_lock = Lock()
         self.progress_var = 0
         self.callback_workers = 0
@@ -125,6 +127,7 @@ class ScanBar(LabelFrame):
             self.progress_bar.update_progress(self.progress_var)
             self.taskbar.set_progress_value(int(self.progress_var / self.progress_bar.max_ * 100), 100)
             if isinstance(info, ServerInfo):
+                self.hot_view.callback(info.port)
                 self.server_list.add_server(info)
                 self.logger.log(INFO, f"[{info.port}]:", "检测到MC服务器")
             elif isinstance(info, dict):
@@ -155,6 +158,7 @@ class ScanBar(LabelFrame):
 
         self.progress_var = 0
         self.progress_bar.reset(stop - start)
+        self.hot_view.reset_view()
         self.scan_obj.config(timeout, thread_num, self.callback)
         Thread(target=self.scan_obj.run, args=(host, range(start, stop))).start()
         Thread(target=self.check_over_thread, daemon=True).start()
@@ -182,6 +186,7 @@ class ScanBar(LabelFrame):
             self.pause_button.configure(state=NORMAL)
 
         Thread(target=task, daemon=True).start()
+        self.hot_view.draw("使得能够更新画面")
         self.taskbar.set_progress_state(TBPFLAG.TBPF_PAUSED)
 
     def resume_scan(self):
@@ -211,13 +216,17 @@ class ScanBar(LabelFrame):
             self.scan_obj.stop()
             while self.scan_obj.worker_count > 0 or self.scan_obj.callback_count > 0:
                 sleep(0.1)
-                self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
+                if self.scan_obj.worker_count > 0:
+                    self.logger.log(DEBUG, "等待工作线程全部结束, 剩余数量:", self.scan_obj.worker_count)
+                elif self.scan_obj.callback_count > 0:
+                    self.logger.log(DEBUG, "等待回调函数全部结束, 剩余数量:", self.scan_obj.callback_count)
             self.logger.log(DEBUG, "工作线程已全部结束")
             self.start_button.configure(state=NORMAL)
             self.taskbar.set_progress_state(TBPFLAG.TBPF_NOPROGRESS)
             self.progress_stop()
 
         Thread(target=stop_task).start()
+        self.hot_view.draw("使得能够更新画面")
         self.taskbar.set_progress_state(TBPFLAG.TBPF_INDETERMINATE)
 
     def check_over_thread(self):
@@ -232,6 +241,7 @@ class ScanBar(LabelFrame):
             sleep(0.05)
 
         self.logger.log(DEBUG, "检测到扫描已结束")
+        self.hot_view.draw("使得能够更新画面")
         if self.in_scan:
             self.in_scan = False
             self.stop_button.configure(state=DISABLED)

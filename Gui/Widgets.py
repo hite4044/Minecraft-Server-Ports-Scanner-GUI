@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import tkinter.font
 from copy import copy
 from math import ceil
 from queue import Queue
@@ -9,7 +10,6 @@ from tkinter.font import Font
 from typing import Any, List
 
 from pyperclip import copy as copy_clipboard
-from tkextrafont import Font
 from ttkbootstrap import *
 from ttkbootstrap.constants import *
 
@@ -72,18 +72,18 @@ class MOTD(Text):
             有概率会引发 RuntimeError, 原因未知
         """
         if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
-            if "UnifontExMono" not in font.families():
-                custom_font = Font(file="assets/UnifontExMono.ttf", family="UnifontExMono")
+            if "Unifont" not in font.families():
+                print("aa")
+                custom_font = Font(font="assets/Unifont.ttf", family="Unifont")
             else:
-                custom_font = font.Font(family="UnifontExMono")
+                custom_font = font.Font(family="Unifont")
         else:
             if "Minecraft AE" not in font.families():
-                custom_font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
+                custom_font = Font(font="assets/MinecraftFont.ttf", family="Minecraft AE")
             else:
                 custom_font = font.Font(family="Minecraft AE")
 
         return custom_font
-
 
 class EntryScaleFrame(Frame):
     def __init__(self, master: Misc, _min: Any, _max: Any, value: Any, text: str, fmt: Any):

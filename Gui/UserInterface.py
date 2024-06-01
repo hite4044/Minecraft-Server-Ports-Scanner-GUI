@@ -5,6 +5,7 @@ from time import perf_counter
 from Gui.ScanBarGui import ScanBar
 from Gui.ServerListGui import ServerList
 from Gui.SettingsFrame import SettingsFrame
+from Gui.PortsRangeGui import PortsHotView
 from Gui.Widgets import *
 from Libs.Vars import *
 
@@ -43,9 +44,10 @@ class GUI(Window):
         self.tabs = Tabs(self)
         self.logger = Logger(self.tabs)
         self.server_scanF = Frame(self.tabs)
+        self.hot_view = PortsHotView(self.tabs)
         self.settings = SettingsFrame(self.tabs)
         self.servers = ServerList(self.server_scanF, self.logger)
-        self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers, self)
+        self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers, self.hot_view, self)
 
         self.pack_widgets()
         print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
@@ -78,4 +80,5 @@ class GUI(Window):
         self.scan_bar.pack(side=BOTTOM, fill=X, padx=3, pady=3)
         self.tabs.add(self.server_scanF, text="控制面板")
         self.tabs.add(self.logger, text="日志")
+        self.tabs.add(self.hot_view, text="端口热图")
         self.tabs.add(self.settings, text="设置")
