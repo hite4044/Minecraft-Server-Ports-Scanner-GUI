@@ -72,10 +72,10 @@ class MOTD(Text):
             有概率会引发 RuntimeError, 原因未知
         """
         if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
-            if "Unifont" not in font.families():
-                custom_font = Font(file="assets/Unifont.otf", family="Unifont")
+            if "UnifontExMono" not in font.families():
+                custom_font = Font(file="assets/UnifontExMono.ttf", family="UnifontExMono")
             else:
-                custom_font = font.Font(family="Unifont")
+                custom_font = font.Font(family="UnifontExMono")
         else:
             if "Minecraft AE" not in font.families():
                 custom_font = Font(file="assets/MinecraftFont.ttf", family="Minecraft AE")
