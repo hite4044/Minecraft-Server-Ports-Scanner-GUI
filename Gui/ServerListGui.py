@@ -226,7 +226,7 @@ class ServerList(LabelFrame):
 
         self.server_filter = ServerFilter(self)  # 服务器筛选器
         self.sep = Separator(self, orient=HORIZONTAL)  # 分割线
-        self.servers_frame = ScrolledFrame(self, autohide=True)  # 装服务器的容器
+        self.servers_frame = ScrolledFrame(self, autohide=True, height=300)  # 装服务器的容器
         self.empty_tip = Label(self, text="没有服务器", font=(Vars.user_settings_loader.configs['global_font'], 25))  # 提示
         self.record_bar = RecordBar(self, self)  # 保存加载功能
         self.servers_info = ServerInfoFrame(self.record_bar)  # 服务器数量信息
