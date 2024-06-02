@@ -1,14 +1,13 @@
 # -*- coding: UTF-8 -*-
+import sys
 from base64 import b64decode
 from copy import deepcopy
 from io import BytesIO
 from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
-from typing import List, Any, Dict, Literal, Union, Tuple
-
+from typing import List, Any, Dict, Union
 from PIL import Image, ImageTk
-from PIL.ImageTk import PhotoImage
 
 from Libs import Vars
 
@@ -244,7 +243,7 @@ class ServerInfo:
             elif data.get("forgeData"):  # 1.12.2 Forge~
                 for mod in data["forgeData"]["mods"]:
                     if "OHNOES" in mod["modmarker"]:
-                        mod["version"] = "未知"
+                        mod["modmarker"] = "未知"
                     self.mod_list[mod["modId"]] = mod["modmarker"]
 
         # 服务器整合包

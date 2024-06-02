@@ -279,6 +279,8 @@ class ModInfo(Frame, Infer):
         self.data = data
         self.mod_list.delete(*self.mod_list.get_children())
         for mod in data.mod_list.items():
+            if "OHNOES" in mod[1]:
+                mod = (mod[0], "未知")  # 已修复在加载旧扫描记录时的鬼脸小人
             self.mod_list.insert("", END, values=mod)
 
     def select_mod(self, event: Event):
