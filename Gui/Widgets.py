@@ -1,12 +1,11 @@
 # -*- coding: UTF-8 -*-
-from copy import copy, deepcopy
+from copy import copy
 from math import ceil
 from queue import Queue
 from random import randint
 from threading import Lock, Thread
 from time import strftime, localtime, time, sleep
 from tkinter import Misc, Event
-from tkinter.font import Font
 from typing import Any, List
 
 from pyperclip import copy as copy_clipboard
@@ -39,6 +38,11 @@ class MOTD(Text):
             tag = str(randint(0, 114514))
             now_font = self.base_font.copy()
 
+            if extra.get("bold"):
+                now_font.config(weight="bold")
+            if extra.get("italic"):
+                now_font.config(slant="italic")
+
             if extra.get("color"):
                 if "#" not in extra["color"]:
                     color = color_map_hex[extra["color"]]
@@ -46,14 +50,11 @@ class MOTD(Text):
                     color = extra["color"]
                 self.tag_configure(tag, foreground=color)
 
-            if extra.get("bold"):  # FIXME: MC的字体粗体方式为向右偏移一个像素, 但tkinter的字体粗体方式为向右偏移很多像素
-                now_font.config(weight="bold", family="宋体")
             if extra.get("underline") or extra.get("underlined"):
                 self.tag_configure(tag, underline=True)
-            elif extra.get("italic"):
-                now_font.config(slant="italic")
-            elif extra.get("strikethrough"):
-                now_font.config(overstrike=True)
+
+            if extra.get("strikethrough"):
+                self.tag_configure(tag, overstrike=True)
 
             self.tag_configure(tag, font=now_font, justify=LEFT)
             self.insert(END, extra["text"], tag)
@@ -70,13 +71,13 @@ class MOTD(Text):
             有概率会引发 RuntimeError, 原因未知
         """
         if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
-            if "Unifont" not in font.families():
-                custom_font = Font(font="assets/Unifont.ttf", family="Unifont")
+            if "UnifontExMono" not in font.families():
+                custom_font = font.Font(font="assets/UnifontExMono.ttf", family="UnifontExMono")
             else:
-                custom_font = font.Font(family="Unifont")
+                custom_font = font.Font(family="UnifontExMono")
         else:
             if "Minecraft AE" not in font.families():
-                custom_font = Font(font="assets/MinecraftFont.ttf", family="Minecraft AE")
+                custom_font = font.Font(font="assets/MinecraftFont.ttf", family="Minecraft AE")
             else:
                 custom_font = font.Font(family="Minecraft AE")
 
