@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import random
 from copy import copy
 from math import ceil
 from queue import Queue
@@ -6,7 +7,7 @@ from random import randint
 from threading import Lock, Thread
 from time import strftime, localtime, time, sleep
 from tkinter import Misc, Event
-from typing import Any, List
+from typing import Any, List, Tuple
 
 from pyperclip import copy as copy_clipboard
 from ttkbootstrap import *
@@ -26,13 +27,23 @@ def get_now_time() -> str:
 
 
 class MOTD(Text):
-    def __init__(self, master: Misc):
+    def __init__(self, master: Misc, viewable_callback: Any = None):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
+        self.viewable: Any = viewable_callback if viewable_callback is not None else lambda: True
+        self.obfuscated_tags = []
+        self.obfuscated_id = ""
+        self.obfuscated_ranges = [(32, 126), (160, 172), (174, 255)]
+        self.obfuscated_chars = []
+        for range_ in self.obfuscated_ranges:
+            self.obfuscated_chars.extend(i for i in range(range_[0], range_[1]))
 
         self.base_font = self.return_font()
 
     def load_motd(self, data: ServerInfo):
+        if self.obfuscated_id:
+            self.after_cancel(self.obfuscated_id)
         self.configure(state=NORMAL)
+        self.obfuscated_tags.clear()
         self.delete("1.0", END)
         for extra in data.description_json:
             tag = str(randint(0, 114514))
@@ -56,9 +67,26 @@ class MOTD(Text):
             if extra.get("strikethrough"):
                 self.tag_configure(tag, overstrike=True)
 
+            if extra.get("obfuscated"):
+                self.obfuscated_tags.append(tag)
+
             self.tag_configure(tag, font=now_font, justify=LEFT)
             self.insert(END, extra["text"], tag)
         self.configure(state=DISABLED)
+        if self.obfuscated_tags:
+            self.obfuscated_id = self.after(20, self.obfuscated_texts)
+
+    def obfuscated_texts(self):
+        if self.viewable:
+            self.configure(state=NORMAL)
+            for tag in self.obfuscated_tags:
+                text_ranges = self.tag_ranges(tag)
+                text_length = len(self.get(text_ranges[0], text_ranges[1]))
+                self.delete(text_ranges[0], text_ranges[1])
+                random_text = "".join([chr(random.choice(self.obfuscated_chars)) for _ in range(text_length)])
+                self.insert(text_ranges[0], random_text, tag)
+            self.configure(state=DISABLED)
+            self.after(20, self.obfuscated_texts)
 
     @staticmethod
     def return_font():

@@ -227,7 +227,8 @@ class ServerList(LabelFrame):
         self.server_filter = ServerFilter(self)  # 服务器筛选器
         self.sep = Separator(self, orient=HORIZONTAL)  # 分割线
         self.servers_frame = ScrolledFrame(self, autohide=True, height=300)  # 装服务器的容器
-        self.empty_tip = Label(self, text="没有服务器", font=(Vars.user_settings_loader.configs['global_font'], 25))  # 提示
+        self.empty_tip = Label(self, text="没有服务器",
+                               font=(Vars.user_settings_loader.configs['global_font'], 25))  # 提示
         self.record_bar = RecordBar(self, self)  # 保存加载功能
         self.servers_info = ServerInfoFrame(self.record_bar)  # 服务器数量信息
 
@@ -332,7 +333,7 @@ class ServerFrame(Frame):
         self.info_window = None
 
         self.favicon = Label(self)
-        self.MOTD = MOTD(self)
+        self.MOTD = MOTD(self, viewable_callback=self.viewable_callback)
         self.base_info = Label(self, font=(Vars.user_settings_loader.configs['global_font'], 9))
 
         self.events_add()
@@ -392,6 +393,12 @@ class ServerFrame(Frame):
         """
         text_list = [extra["text"] for extra in self.data.description_json]
         return ''.join(text_list)
+
+    def viewable_callback(self):
+        y_range = (self.winfo_y() - self.winfo_height() / 2, self.winfo_y() + self.winfo_height() / 2)
+        master = self.master.master
+        master_range = (master.winfo_y() - master.winfo_height() / 2, master.winfo_y() + master.winfo_height() / 2)
+        return master_range[0] < y_range[0] < master_range[1] or master_range[0] < y_range[1] < master_range[1]
 
     def pop_menu(self, event: Event):
         menu = Menu()
