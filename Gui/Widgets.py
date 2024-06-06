@@ -346,12 +346,16 @@ class RangeScale(Canvas):
             self.redraw()
 
     def update_color(self):
-        if self.min_highlight:
+        if self.bind_min_handle:
+            self.min_handle_color = Color(self.min_handle_base_color).set_brightness(0.9).hex
+        elif self.min_highlight:
             self.min_handle_color = Color(self.min_handle_base_color).set_brightness(1.1).hex
         else:
             self.min_handle_color = copy(self.min_handle_base_color)
 
-        if self.max_highlight:
+        if self.bind_max_handle:
+            self.max_handle_color = Color(self.max_handle_base_color).set_brightness(0.9).hex
+        elif self.max_highlight:
             self.max_handle_color = Color(self.max_handle_base_color).set_brightness(1.1).hex
         else:
             self.max_handle_color = copy(self.max_handle_base_color)
@@ -360,15 +364,16 @@ class RangeScale(Canvas):
     def mouse_down(self, *_):
         if self.max_highlight:
             self.bind_max_handle = True
-            return
-        if self.min_highlight:
+        elif self.min_highlight:
             self.bind_min_handle = True
+        self.update_color()
 
     def mouse_up(self, *_):
         if self.bind_min_handle:
             self.bind_min_handle = False
         elif self.bind_max_handle:
             self.bind_max_handle = False
+        self.update_color()
 
     @property
     def value(self) -> (float, float):
