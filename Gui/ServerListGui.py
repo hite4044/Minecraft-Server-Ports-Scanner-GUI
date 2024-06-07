@@ -364,7 +364,7 @@ class ServerFrame(Frame):
             self.default_favicon = PhotoImage(master=self, file=r"assets/server_icon.png")
             self.favicon.configure(image=self.default_favicon)
 
-        self.MOTD.load_motd(self.data)
+        self.MOTD.load_data(self.data)
         base_info = f"人数:{self.data.player_online}/{self.data.player_max}, " \
                     f"版本: {self.data.version_name}"
         if len(base_info) > 80:

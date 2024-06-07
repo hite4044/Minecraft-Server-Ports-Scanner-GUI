@@ -11,13 +11,6 @@ from Libs.Vars import user_settings_loader, debug
 from Network.Scanner import DescriptionParser, Port, ServerInfo
 
 
-class Infer:
-    """一个信息组件，必须含有load_data方法"""
-
-    def load_data(self, data: ServerInfo):
-        pass
-
-
 class InfoWindow(Toplevel, Infer):
     """信息主窗口"""
 
@@ -57,7 +50,7 @@ class InfoWindow(Toplevel, Infer):
         self.load_icon(self.favicon.favicon)
 
         self.data = data
-        self.MOTD.load_motd(self.data)
+        self.MOTD.load_data(self.data)
         self.base_info.load_data(self.data)
         self.version_info.load_data(self.data)
 
@@ -236,17 +229,14 @@ class VersionInfo(Frame, Infer):
     def load_data(self, data: ServerInfo):
         self.data = data
 
-        data.backup = deepcopy(data.description_json)
         if "§" in data.version_name:
-            data.description_json = DescriptionParser.format_chars_to_extras(data.version_name)
+            description_json = DescriptionParser.format_chars_to_extras(data.version_name)
         else:
-            data.description_json = [{"text": data.version_name}]
+            description_json = [{"text": data.version_name}]
         self.version_name_label.configure(text="版本名：")
         if self.if_version_name_shown_as_label:
             self.version_name_label.configure(text=f"版本名：{data.version_name}")
-        self.version_name_text.load_motd(data)
-        data.description_json = deepcopy(data.backup)
-        del data.backup
+        self.version_name_text.load_motd(description_json)
         self.minecraft_version.configure(text=f"正式版本名：{data.protocol_name}")
         self.protocol_version.configure(text=f"协议版本号：{data.protocol_version}")
         self.major_name.configure(text=f"大版本：{data.protocol_major_name}")

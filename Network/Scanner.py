@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-import sys
 from base64 import b64decode
 from copy import deepcopy
 from io import BytesIO

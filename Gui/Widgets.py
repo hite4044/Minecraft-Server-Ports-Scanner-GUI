@@ -26,7 +26,14 @@ def get_now_time() -> str:
     return strftime("%Y-%m-%d_%H-%M-%S", localtime())
 
 
-class MOTD(Text):
+class Infer:
+    """一个信息组件，必须含有load_data方法"""
+
+    def load_data(self, data: ServerInfo):
+        pass
+
+
+class MOTD(Text, Infer):
     def __init__(self, master: Misc, viewable_callback: Any = None):
         super(MOTD, self).__init__(master, state=DISABLED, height=1, width=70, relief=FLAT)
         self.viewable: Any = viewable_callback if viewable_callback is not None else lambda: True
@@ -39,13 +46,16 @@ class MOTD(Text):
 
         self.base_font = self.return_font()
 
-    def load_motd(self, data: ServerInfo):
+    def load_data(self, data: ServerInfo):
+        self.load_motd0(data.description_json)
+
+    def load_motd(self, description_json: list):
         if self.obfuscated_id:
             self.after_cancel(self.obfuscated_id)
         self.configure(state=NORMAL)
         self.obfuscated_tags.clear()
         self.delete("1.0", END)
-        for extra in data.description_json:
+        for extra in description_json:
             tag = str(randint(0, 114514))
             now_font = self.base_font.copy()
 

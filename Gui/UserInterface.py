@@ -37,8 +37,6 @@ class GUI(Window):
     def __init__(self):
         super(GUI, self).__init__()
 
-        timer = perf_counter()
-
         set_default_font()
         self.config_root_window()
 
@@ -53,7 +51,6 @@ class GUI(Window):
         self.scan_bar = ScanBar(self.server_scanF, self.logger, self.servers, self.hot_view, self)
 
         self.pack_widgets()
-        print(f"GUI构建时间: {perf_counter() - timer:.3f}秒")
 
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
