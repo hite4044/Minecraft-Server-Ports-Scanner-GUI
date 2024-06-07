@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+from copy import deepcopy
 from tkinter import Listbox
 from tkinter.messagebox import showinfo
 
@@ -6,7 +7,7 @@ from ttkbootstrap.tooltip import ToolTip
 from io import BytesIO
 
 from Gui.Widgets import *
-from Libs.Vars import user_settings_loader
+from Libs.Vars import user_settings_loader, debug
 from Network.Scanner import DescriptionParser, Port, ServerInfo
 
 
@@ -169,6 +170,9 @@ class BaseInfo(Frame, Infer):
         self.host_copy_b = Button(self, text="复制地址")
 
         self.pack_widgets()
+        if debug:
+            self.print_data = Button(self, text="打印数据", command=lambda: print(self.data.parsed_data))
+            self.print_data.pack()
 
     def load_data(self, data: ServerInfo):
         self.data = data
@@ -232,6 +236,7 @@ class VersionInfo(Frame, Infer):
     def load_data(self, data: ServerInfo):
         self.data = data
 
+        data.backup = deepcopy(data.description_json)
         if "§" in data.version_name:
             data.description_json = DescriptionParser.format_chars_to_extras(data.version_name)
         else:
@@ -240,6 +245,8 @@ class VersionInfo(Frame, Infer):
         if self.if_version_name_shown_as_label:
             self.version_name_label.configure(text=f"版本名：{data.version_name}")
         self.version_name_text.load_motd(data)
+        data.description_json = deepcopy(data.backup)
+        del data.backup
         self.minecraft_version.configure(text=f"正式版本名：{data.protocol_name}")
         self.protocol_version.configure(text=f"协议版本号：{data.protocol_version}")
         self.major_name.configure(text=f"大版本：{data.protocol_major_name}")

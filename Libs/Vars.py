@@ -106,6 +106,7 @@ WARNING = "warning"
 ERROR = "error"
 
 # 设置
+debug = True
 config_dir = "./config"
 if not exists(path_join(config_dir)):
     mkdir(path_join(config_dir))

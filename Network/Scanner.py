@@ -370,8 +370,6 @@ class DescriptionParser:
                 return DescriptionParser.parse(description["translate"])
 
             extras = []
-            if "extra" in description:
-                extras.extend(DescriptionParser.parse(description["extra"]))
             if "text" in description:
                 sub_extras = deepcopy(description)
                 if "extra" in sub_extras:
@@ -380,4 +378,6 @@ class DescriptionParser:
                     extras.extend(DescriptionParser.format_chars_to_extras(sub_extras["text"]))
                 else:
                     extras.append(sub_extras)
+            if "extra" in description:
+                extras.extend(DescriptionParser.parse(description["extra"]))
             return extras
