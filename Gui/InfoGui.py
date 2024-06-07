@@ -165,7 +165,7 @@ class BaseInfo(Frame, Infer):
         self.pack_widgets()
         if debug:
             self.print_data = Button(self, text="打印数据", command=lambda: print(self.data.parsed_data))
-            self.print_data.pack()
+            self.print_data.pack(pady=5)
 
     def load_data(self, data: ServerInfo):
         self.data = data

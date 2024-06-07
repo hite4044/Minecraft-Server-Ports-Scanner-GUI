@@ -60,6 +60,8 @@ class GUI(Window):
         Thread(target=self.place_window_center).start()
 
     def set_icon(self):
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("product")
         if exists("assets/icon.ico"):
             self._icon.icon = ImageTk.PhotoImage(file="assets/icon.ico")
             self.iconphoto(True, self._icon.icon)
