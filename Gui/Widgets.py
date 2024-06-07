@@ -47,7 +47,7 @@ class MOTD(Text, Infer):
         self.base_font = self.return_font()
 
     def load_data(self, data: ServerInfo):
-        self.load_motd0(data.description_json)
+        self.load_motd(data.description_json)
 
     def load_motd(self, description_json: list):
         if self.obfuscated_id:
