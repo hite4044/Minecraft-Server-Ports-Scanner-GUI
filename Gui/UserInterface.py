@@ -35,7 +35,7 @@ class TitleBar(Frame):
 
 class GUI(Window):
     def __init__(self):
-        super(GUI, self).__init__()
+        super(GUI, self).__init__(themename=user_settings_loader.configs['theme_name'])
 
         set_default_font()
         self.config_root_window()
@@ -54,7 +54,6 @@ class GUI(Window):
 
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
-        Style().theme_use(user_settings_loader.configs['theme_name'])
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
         Thread(target=self.set_icon).start()
         Thread(target=self.place_window_center).start()

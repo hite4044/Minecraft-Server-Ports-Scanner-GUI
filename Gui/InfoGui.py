@@ -1,5 +1,4 @@
 # -*- coding: UTF-8 -*-
-from copy import deepcopy
 from tkinter import Listbox
 from tkinter.messagebox import showinfo
 
