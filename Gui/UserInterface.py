@@ -19,9 +19,9 @@ def set_default_font():
 
 class Title(Label):
     def __init__(self, master: Misc):
-        super(Title, self).__init__(master)
-        self.configure(text="Minecraft服务器扫描器")
-        self.configure(font=(Vars.user_settings_loader.configs['global_font'], 24))
+        super(Title, self).__init__(master,
+                                    text="Minecraft服务器扫描器",
+                                    font=(Vars.user_settings_loader.configs['global_font'], 24))
 
 
 class TitleBar(Frame):
@@ -68,7 +68,6 @@ class GUI(Window):
             print("图标文件丢失", file=stderr)
 
     def on_delete_window(self):
-        # FIXME 扫描时结束任务会报错
         self.scan_bar.close_save_config()
         UserSettingsSaver.save_user_configs(user_settings_loader)
         self.destroy()
