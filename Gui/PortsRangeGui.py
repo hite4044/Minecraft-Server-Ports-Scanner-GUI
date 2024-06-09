@@ -1,6 +1,5 @@
 from ttkbootstrap.tooltip import ToolTip
 from Gui.Widgets import *
-from Libs.Vars import *
 
 
 class PortsHotView(Frame):

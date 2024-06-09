@@ -3,8 +3,9 @@ import json
 import warnings
 from os import mkdir
 from os.path import join as path_join, isfile, exists
-from typing import List, Dict
+from typing import List, Dict, Union, Any
 
+from ttkbootstrap import Style
 from win32api import GetSystemMetrics
 from win32con import SM_CXSCREEN, DESKTOPHORZRES
 from win32gui import GetDC, ReleaseDC
@@ -106,10 +107,21 @@ WARNING = "warning"
 ERROR = "error"
 
 # 设置
-debug = True
+debug = False
 config_dir = "./config"
 if not exists(path_join(config_dir)):
     mkdir(path_join(config_dir))
+
+
+class StyOP:
+    def __init__(self, style: Union[Style, Any]):
+        self.style = style
+
+    def set_obj(self, style_obj: Style):
+        self.style = style_obj
+
+    def __call__(self):
+        return self.style
 
 
 class UserAddressOperator:
@@ -225,3 +237,5 @@ UserAddressOperator.read_config_file_list()
 
 scale_rater = ScaleRater()
 user_settings_loader = UserSettingsLoader()
+
+Sty = StyOP(None)

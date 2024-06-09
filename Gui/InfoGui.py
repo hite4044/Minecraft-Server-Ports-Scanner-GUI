@@ -5,9 +5,8 @@ from tkinter.messagebox import showinfo
 from ttkbootstrap.tooltip import ToolTip
 from io import BytesIO
 
-from Gui.Widgets import *
-from Libs.Vars import user_settings_loader, debug
 from Network.Scanner import DescriptionParser, Port, ServerInfo
+from Gui.Widgets import *
 
 
 class InfoWindow(Toplevel, Infer):

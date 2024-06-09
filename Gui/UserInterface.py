@@ -10,6 +10,7 @@ from Gui.PortsRangeGui import PortsHotView
 from Gui.Widgets import *
 from Libs.Vars import *
 
+
 print(f"库加载时间: {perf_counter() - load_timer:.3f}秒")
 
 
@@ -55,6 +56,7 @@ class GUI(Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
+        Sty.set_obj(self._style)
         Thread(target=self.set_icon).start()
         Thread(target=self.place_window_center).start()
 
@@ -82,3 +84,4 @@ class GUI(Window):
         self.tabs.add(self.logger, text="日志")
         self.tabs.add(self.hot_view, text="端口热图")
         self.tabs.add(self.settings, text="设置")
+

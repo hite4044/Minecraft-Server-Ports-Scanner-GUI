@@ -8,12 +8,10 @@ from ping3 import ping
 from win32con import MB_ICONERROR, MB_OK, MB_YESNO, MB_ICONWARNING, IDYES
 from win32gui import GetParent, GetWindowText, GetClassName, MessageBox
 
-from Gui.ServerListGui import ServerList
 from Gui.PortsRangeGui import PortsHotView
-from Gui.Widgets import *
+from Gui.ServerListGui import ServerList
 from Libs.TaskbarLib import *
-from Libs.Vars import *
-from Network.Scanner import *
+from Gui.Widgets import *
 
 
 class ScanBar(LabelFrame):

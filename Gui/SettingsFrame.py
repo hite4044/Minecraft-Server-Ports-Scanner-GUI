@@ -1,10 +1,7 @@
 import sys
 
-import ttkbootstrap
 from ttkbootstrap.scrolled import ScrolledFrame
-
 from Gui.Widgets import *
-from Libs.Vars import user_settings_loader
 
 
 class SettingFrame(Frame):
@@ -20,7 +17,7 @@ class SettingFrame(Frame):
             self.widget = Entry(self, textvariable=self.variable)
         elif isinstance(value, int):
             self.variable = IntVar(self, value=value, name=name)
-            self.widget = ttkbootstrap.Spinbox(self, textvariable=self.variable, to=sys.maxsize)
+            self.widget = Spinbox(self, textvariable=self.variable, to=sys.maxsize)
         self.label.pack(side=LEFT)
         self.widget.pack(side=LEFT, padx=5)
 

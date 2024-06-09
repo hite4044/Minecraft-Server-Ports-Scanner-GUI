@@ -2,21 +2,17 @@
 import random
 from copy import copy
 from math import ceil
-from queue import Queue
 from random import randint
-from threading import Lock, Thread
-from time import strftime, localtime, time, sleep
+from time import strftime, localtime, time
 from tkinter import Misc, Event
-from typing import Any, List, Tuple
 
-from pyperclip import copy as copy_clipboard
 from ttkbootstrap import *
 from ttkbootstrap.constants import *
+from pyperclip import copy as copy_clipboard
 
-from Libs import Vars
 from Libs.ColorLib import Color
-from Libs.Vars import scale_rater, color_map_hex
-from Network.Scanner import ServerInfo
+from Libs.Vars import *
+from Network.Scanner import *
 
 ERROR = "error"
 DEBUG = "debug"
@@ -265,10 +261,10 @@ class RangeScale(Canvas):
         self.bind_min_handle = False  # 鼠标是否绑定min滑块
         self.bind_max_handle = False  # 鼠标是否绑定max滑块
 
-        self.bar_color = Style().colors.light  # 拖动范围条的颜色
-        self.range_color = Color(Style().colors.light).set_brightness(1.5).hex  # 范围条的颜色
-        self.min_handle_base_color = Style().colors.primary  # 小值滑块基础颜色
-        self.max_handle_base_color = Color(Style().colors.primary).reverse().hex  # 大值滑块基础颜色
+        self.bar_color = Sty().colors.light  # 拖动范围条的颜色
+        self.range_color = Color(Sty().colors.light).set_brightness(1.5).hex  # 范围条的颜色
+        self.min_handle_base_color = Sty().colors.primary  # 小值滑块基础颜色
+        self.max_handle_base_color = Color(Sty().colors.primary).reverse().hex  # 大值滑块基础颜色
         self.min_handle_color = self.min_handle_base_color[:]  # 小值滑块颜色
         self.max_handle_color = self.max_handle_base_color[:]  # 大值滑块颜色
 
@@ -280,7 +276,7 @@ class RangeScale(Canvas):
         self.redraw()
 
     def color_change(self, *_):
-        colors = Style().colors
+        colors = Sty().colors
         self.min_handle_base_color = colors.primary
         self.max_handle_base_color = Color(colors.primary).reverse().hex
         if Color(colors.bg).sum / 3 > 0.6:
@@ -297,7 +293,7 @@ class RangeScale(Canvas):
         height = self.winfo_height()
         width = self.winfo_width()
 
-        source = Image.new("RGBA", (self.winfo_width(), height), Style().colors.bg)
+        source = Image.new("RGBA", (self.winfo_width(), height), Sty().colors.bg)
         source2 = Image.new("RGBA", (self.winfo_width() * 10, height * 10), "#FFFF0000")
 
         draw = ImageDraw.Draw(source)
@@ -424,7 +420,7 @@ class TipEntry(Entry):
 class ProgressBar(Canvas):
     def __init__(self, master: Misc, text: str = "0%"):
         super(ProgressBar, self).__init__(master, height=26)
-        self.color = Style().colors
+        self.color = Sty().colors
         self.bind("<Configure>", self.redraw)
         self.bind("<<ThemeChanged>>", self.change_color)
         self.percentage = 0
@@ -437,7 +433,7 @@ class ProgressBar(Canvas):
         self.redraw()
 
     def change_color(self, *_):
-        self.color = Style().colors
+        self.color = Sty().colors
         self.redraw()
 
     def redraw(self, *_):
@@ -551,7 +547,7 @@ class ThemesSelector(Frame):
         self.after(500, self.thread_load_themes)
 
     def thread_load_themes(self):
-        self.style = Style()
+        self.style = Sty()
         self.theme_selector.configure(values=self.style.theme_names())
         self.theme_selector.set(self.style.theme_use())
 
