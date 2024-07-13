@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from sys import stderr
 from time import perf_counter
+
 load_timer = perf_counter()
 
 from Gui.ScanBarGui import ScanBar
@@ -9,7 +10,6 @@ from Gui.SettingsFrame import SettingsFrame
 from Gui.PortsRangeGui import PortsHotView
 from Gui.Widgets import *
 from Libs.Vars import *
-
 
 print(f"库加载时间: {perf_counter() - load_timer:.3f}秒")
 
@@ -56,16 +56,17 @@ class GUI(Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
+        self.wm_resizable(False, True)
         Sty.set_obj(self._style)
         Thread(target=self.set_icon).start()
-        Thread(target=self.place_window_center).start()
+        #Thread(target=self.place_window_center).start()
 
     def set_icon(self):
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("product")
         if exists("assets/icon.ico"):
             self._icon.icon = ImageTk.PhotoImage(file="assets/icon.ico")
-            self.iconphoto(True, self._icon.icon)
+            self.after(30, lambda: self.iconphoto(True, self._icon.icon))
         else:
             print("图标文件丢失", file=stderr)
 
@@ -84,4 +85,3 @@ class GUI(Window):
         self.tabs.add(self.logger, text="日志")
         self.tabs.add(self.hot_view, text="端口热图")
         self.tabs.add(self.settings, text="设置")
-

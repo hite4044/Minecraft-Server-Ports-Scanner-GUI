@@ -16,29 +16,39 @@ from Gui.Widgets import *
 
 
 class ServersFilter:
-    def __init__(self, version: str, enable_re: bool):
+    """服务器筛选器"""
+    def __init__(self, version: str, enable_re: bool, has_player: bool):
         self.version_keywords = version
         self.enable_re = enable_re
+        self.has_player = has_player
 
     def filter(self, data: ServerInfo) -> bool:
-        return self.version_match(data)
+        return self.match(data)
 
-    def version_match(self, data: ServerInfo):
-        version_name = data.version_name
-        if self.enable_re:
-            try:
-                return bool(match(self.version_keywords, version_name))
-            except error:
-                raise ValueError("正则表达式错误")
-        else:
-            return self.version_keywords in version_name
+    def match(self, data: ServerInfo) -> bool:
+        if (not self.has_player) or data.player_online:  # 如果服务器有人
+            version_name = data.version_name
+            if self.enable_re:  # 如果启用正则表达式筛选
+                try:
+                    return bool(match(self.version_keywords, version_name))
+                except error:
+                    raise ValueError("正则表达式错误")
+            else:
+                return self.version_keywords in version_name
+        return False
 
 
 class ServerFilter(Frame):
+    """服务器筛选的GUI类"""
     def __init__(self, master: Misc):
         super(ServerFilter, self).__init__(master)
         self.version_frame = Frame(self)
         self.version_entry = TextEntryFrame(self.version_frame, tip="版本名: ")
+        self.has_player_var = BooleanVar(self.version_frame, value=False)
+        self.has_player_check = Checkbutton(self.version_frame,
+                                            text="必须有人",
+                                            style="round-toggle",
+                                            variable=self.has_player_var)
         self.version_re_var = BooleanVar(self.version_frame, value=False)
         self.version_re_check = Checkbutton(self.version_frame,
                                             text="正则匹配",
@@ -61,6 +71,7 @@ class ServerFilter(Frame):
         self.version_frame.pack_configure(side=LEFT, fill=X, expand=True)
         self.version_entry.pack(side=LEFT, fill=X, expand=True, padx=5)
         self.version_re_check.pack(side=LEFT, padx=5)
+        self.has_player_check.pack(side=LEFT, padx=5)
 
         self.sep.pack(side=LEFT, fill=Y, padx=5)
 
@@ -69,16 +80,21 @@ class ServerFilter(Frame):
         self.filter_button.pack(side=LEFT, padx=5)
 
     def reset(self, *_):
+        """重置条件"""
         self.version_entry.delete(0, END)
         self.version_re_var.set(False)
+        self.has_player_var.set(False)
         self.filtration()
 
     def get_filter(self):
+        """获取过滤器对象"""
         version = self.version_entry.get()
         enable_re = self.version_re_var.get()
-        return ServersFilter(version, enable_re)
+        has_player = self.has_player_var.get()
+        return ServersFilter(version, enable_re, has_player)
 
     def filtration(self, *_):
+        """重新加载服务器列表"""
         # noinspection PyUnresolvedReferences
         self.master.reload_server(self.get_filter())
 
@@ -92,6 +108,7 @@ class ServerCounter(Label):
 
 
 class ServerInfoFrame(Frame):
+    """界面左下角计数器的GUI类"""
     def __init__(self, master: Misc):
         super(ServerInfoFrame, self).__init__(master)
 
@@ -99,10 +116,12 @@ class ServerInfoFrame(Frame):
         self.server_counter.pack_configure(side=RIGHT, padx=4, pady=4)
 
     def update_counter(self, show_servers: int, all_servers: int):
+        """更新计数器"""
         self.server_counter.update_count(show_servers, all_servers)
 
 
 class RecordBar(Frame):
+    """界面下方的保存加载条的GUI类"""
     def __init__(self, master: Misc, server_list: Any):
         super(RecordBar, self).__init__(master)
         self.server_list = server_list
@@ -117,6 +136,7 @@ class RecordBar(Frame):
         self.save_button.pack_configure(side=RIGHT)
 
     def load_record(self):
+        """加载扫描记录"""
         # noinspection PyUnresolvedReferences
         scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.askopenfilename(title="选择扫描记录文件",
@@ -188,6 +208,7 @@ class RecordBar(Frame):
             del sys.modules["scanner"]  # 删除先前为了修复问题而引入的 scanner
 
     def save_record(self):
+        """保存服务器扫描记录"""
         # noinspection PyUnresolvedReferences
         scan_bar = self.master.master.master.master.scan_bar
         fp = filedialog.asksaveasfilename(confirmoverwrite=True,
@@ -212,6 +233,7 @@ class RecordBar(Frame):
 
 
 class ServerList(LabelFrame):
+    """服务器列表GUI类"""
     def __init__(self, master: Misc, logger: Logger):
         super(ServerList, self).__init__(master, text="服务器列表")
         self.add_lock = Lock()  # 服务器添加锁
@@ -242,6 +264,7 @@ class ServerList(LabelFrame):
         self.update_info_pos()
 
     def add_server(self, info: ServerInfo, _filter: ServersFilter = None):
+        """添加一个服务器进入列表, 不符合条件的将暂时不会展示"""
         with self.add_lock:
             server_frame = ServerFrame(self.servers_frame, info)
             server_frame.bind("<<Delete>>", self.on_delete_server)
@@ -257,6 +280,7 @@ class ServerList(LabelFrame):
             self.servers_info.update_counter(self.show_serverC, self.all_serverC)
 
     def reload_server(self, server_filter: ServersFilter):
+        """重新加载服务器列表， 需提供筛选器"""
         self.add_lock.acquire(blocking=True)  # 获得锁
         timer = time()
         self.logger.log(DEBUG, "开始重新加载服务器")
@@ -282,8 +306,10 @@ class ServerList(LabelFrame):
         self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
         self.add_lock.release()  # 释放锁
         self.logger.log(DEBUG, f"重载服务器完毕, 用时: {round(time() - timer, 2)}s")
+        self.servers_frame.yview_moveto(0)
 
     def can_show(self, info: ServerInfo, _filter: ServersFilter = None) -> (bool, int):
+        """判断服务器是否能够展示"""
         if _filter is None:
             _filter = self.servers_filter
         try:
@@ -292,12 +318,14 @@ class ServerList(LabelFrame):
             return False, 1
 
     def update_info_pos(self, *_):
+        """更新左下角服务器计数器的位置"""
         if self.show_serverC > 0:
             self.empty_tip.place_forget()
         else:
             self.empty_tip.place(relx=0.5, rely=0.5, anchor=CENTER)
 
     def on_delete_server(self, event: Event):
+        """在删除服务器的时候触发的函数"""
         server_frame: ServerFrame = event.widget
         self.server_map.pop(server_frame.data)
         self.all_serverC -= 1
@@ -305,6 +333,7 @@ class ServerList(LabelFrame):
         self.servers_info.update_counter(self.show_serverC, self.all_serverC)  # 更新计数器
 
     def delete_all_servers(self, *_):
+        """在删除所有服务器的时候触发的函数"""
         ret = askyesnocancel("删除所有服务器", "确定要删除所有服务器吗？", parent=self)
         if not ret:
             return
@@ -325,6 +354,7 @@ class ServerList(LabelFrame):
 
 
 class ServerFrame(Frame):
+    """一个服务器的GUI类"""
     def __init__(self, master: Misc, data: ServerInfo):
         super().__init__(master)
         self.default_favicon = None
@@ -340,6 +370,7 @@ class ServerFrame(Frame):
         self.load_data()
 
     def events_add(self):
+        """添加事件绑定"""
         self.keep_text_top()
         self.MOTD.configure(yscrollcommand=self.keep_text_top)
         self.favicon.bind("<MouseWheel>", lambda e: self.event_generate("<MouseWheel>", delta=e.delta))
@@ -357,6 +388,7 @@ class ServerFrame(Frame):
         self.MOTD.yview_moveto(0.02)
 
     def load_data(self):
+        """加载服务器数据, 数据由初始化时提供"""
         if self.data.has_favicon:
             self.favicon.configure(image=self.data.favicon_photo)
         else:
@@ -377,6 +409,7 @@ class ServerFrame(Frame):
         self.base_info.pack(anchor=NW, ipady=0, ipadx=0)
 
     def load_window(self, *_):
+        """加载服务器详细信息窗口"""
         if isinstance(self.info_window, Toplevel):
             if self.info_window.winfo_exists():
                 self.info_window.focus_set()
@@ -394,12 +427,14 @@ class ServerFrame(Frame):
         return ''.join(text_list)
 
     def viewable_callback(self):
+        """判断当前窗口的y轴范围是否在master窗口的y轴范围内"""
         y_range = (self.winfo_y() - self.winfo_height() / 2, self.winfo_y() + self.winfo_height() / 2)
         master = self.master.master
         master_range = (master.winfo_y() - master.winfo_height() / 2, master.winfo_y() + master.winfo_height() / 2)
         return master_range[0] < y_range[0] < master_range[1] or master_range[0] < y_range[1] < master_range[1]
 
     def pop_menu(self, event: Event):
+        """弹出菜单"""
         menu = Menu()
         menu.add_command(label="复制地址", command=self.copy_ip)
         menu.add_command(label="复制MOTD", command=self.copy_motd)
@@ -409,11 +444,14 @@ class ServerFrame(Frame):
         menu.post(event.x_root, event.y_root)
 
     def delete_server(self):
+        """删除服务器时执行的函数"""
         self.event_generate("<<Delete>>")
         self.destroy()
 
     def copy_ip(self):
+        """复制IP"""
         copy_clipboard(f"{self.data.host}:{self.data.port}")
 
     def copy_motd(self):
+        """复制文字标题"""
         copy_clipboard(self.load_motd_text())
