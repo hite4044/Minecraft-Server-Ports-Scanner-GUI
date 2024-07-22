@@ -38,7 +38,8 @@ class SettingsFrame(Frame):
             "ping_before_scan": "扫描之前先检测连通性",
             "global_font": "字体",
             "max_thread_number": "扫描时允许的最大线程数",
-            "MOTD_use_unicode_font": "MOTD全部使用Unifont字体显示"
+            "MOTD_use_unicode_font": "MOTD全部使用Unifont字体显示",
+            "players_all": "服务器玩家累积并去重"
         }
 
         self.config_frame = ScrolledFrame(self)

@@ -222,7 +222,9 @@ class UserSettingsLoader:
                 'ping_before_scan': True,
                 "global_font": "微软雅黑",
                 "max_thread_number": 256,
-                "MOTD_use_unicode_font": True}
+                "MOTD_use_unicode_font": True,
+                "players_all": False
+                }
 
 
 class UserSettingsSaver:

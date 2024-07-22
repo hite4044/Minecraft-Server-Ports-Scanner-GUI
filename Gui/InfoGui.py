@@ -53,6 +53,9 @@ class InfoWindow(Toplevel, Infer):
         self.version_info.load_data(self.data)
 
     def reget_info(self):
+        Thread(target=self._reget_info, daemon=True).start()
+
+    def _reget_info(self):
         server_status = Port(self.data.host, self.data.port).get_server_info()
         if server_status["status"] == "offline":
             showinfo("服务器已经死了，都是你害的辣 (doge", "服务器已离线", parent=self)
@@ -104,13 +107,19 @@ class PlayersInfo(Frame, Infer):
         self.player_list.pack(side=LEFT, fill=BOTH, expand=True)
         self.data = None
         self.now_item = None
+        self.players = {}
 
     def load_data(self, data: ServerInfo):
         self.data = data
 
         self.text.configure(text=f"人数：{data.player_online}/{data.player_max}")
-        self.player_list.delete(0, END)
+        if not user_settings_loader.configs["players_all"]:
+            self.players.clear()
         for player in data.players:
+            if player["name"] not in self.players:
+                self.players[player["name"]] = player
+        self.player_list.delete(0, END)
+        for player in self.players.values():
             self.player_list.insert(END, player["name"])
         if len(data.players) > 0:
             self.player_list.unbind_all("<Enter>")
@@ -143,7 +152,7 @@ class PlayersInfo(Frame, Infer):
             item = self.player_list.nearest(event.y)
             if item == -1 or item == self.now_item:
                 return
-            self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.data.players[item]['id'])
+            self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.players[item]['id'])
             self.now_item = item
 
 
