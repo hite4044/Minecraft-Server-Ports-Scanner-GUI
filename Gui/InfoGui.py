@@ -3,9 +3,6 @@ from tkinter import Listbox
 from tkinter.messagebox import showinfo
 
 from ttkbootstrap.tooltip import ToolTip
-from io import BytesIO
-
-from Network.Scanner import DescriptionParser, Port, ServerInfo
 from Gui.Widgets import *
 
 
@@ -92,6 +89,7 @@ class InfoWindow(Toplevel, Infer):
         self.title(text)
 
 
+# noinspection PyTypeChecker
 class PlayersInfo(Frame, Infer):
     """玩家信息组件"""
 
@@ -125,6 +123,7 @@ class PlayersInfo(Frame, Infer):
             self.player_list.unbind_all("<Enter>")
             self.player_list.bind("<Enter>", self.enter)
             self.player_list.bind("<Enter>", self.tip.enter, "+")
+            self.player_list.bind("<Button-3>", self.pop_menu)
         else:
             self.tip.hide_tip()
 
@@ -152,8 +151,19 @@ class PlayersInfo(Frame, Infer):
             item = self.player_list.nearest(event.y)
             if item == -1 or item == self.now_item:
                 return
-            self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + self.players[item]['id'])
+            self.tip.toplevel.winfo_children()[0].configure(text="UUID: " + list(self.players.values())[item]['id'])
             self.now_item = item
+
+    def pop_menu(self, event: Event):
+        item = self.player_list.nearest(event.y)
+        if item == -1:
+            return
+        player = list(self.players.values())[item]
+
+        menu = Menu(self.player_list, tearoff=0)
+        menu.add_command(label="复制名称", command=lambda: copy_clipboard(player["name"]))
+        menu.add_command(label="复制UUID", command=lambda: copy_clipboard(player["id"]))
+        menu.post(event.x_root, event.y_root)
 
 
 class BaseInfo(Frame, Infer):
