@@ -3,7 +3,21 @@ import sys
 import os
 
 
+def check_con():
+    if "-no_console" in sys.argv:
+        from win32console import GetConsoleWindow
+        from win32gui import ShowWindow, SetWindowLong
+        from win32con import SW_HIDE, GWL_EXSTYLE, WS_EX_TOOLWINDOW
+        try:
+            hwnd = GetConsoleWindow()
+            if hwnd:
+                ShowWindow(hwnd, SW_HIDE)
+            SetWindowLong(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW)
+        except Exception as e:
+            _ = e
+
 def main():
+    check_con()
     from time import perf_counter
     all_timer = perf_counter()
     from Gui.UserInterface import GUI
