@@ -56,7 +56,7 @@ class GUI(Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
-        self.wm_resizable(False, True)
+        self.wm_resizable(user_settings_loader.configs["allow_hor_resize"], True)
         Sty.set_obj(self._style)
         Thread(target=self.set_icon).start()
         #Thread(target=self.place_window_center).start()

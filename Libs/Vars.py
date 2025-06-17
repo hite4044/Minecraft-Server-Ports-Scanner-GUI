@@ -223,7 +223,8 @@ class UserSettingsLoader:
                 "global_font": "微软雅黑",
                 "max_thread_number": 256,
                 "MOTD_use_unicode_font": True,
-                "players_all": False
+                "players_all": False,
+                "allow_hor_resize": False
                 }
 
 
