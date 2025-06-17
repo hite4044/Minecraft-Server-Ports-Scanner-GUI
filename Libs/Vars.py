@@ -224,7 +224,11 @@ class UserSettingsLoader:
                 "max_thread_number": 256,
                 "MOTD_use_unicode_font": True,
                 "players_all": False,
-                "allow_hor_resize": False
+                "allow_hor_resize": False,
+                "use_proxy": False,
+                "proxy_kind": "sock5",
+                "proxy_host": "127.0.0.1",
+                "proxy_port": "11451"
                 }
 
 

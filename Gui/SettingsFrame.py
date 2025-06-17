@@ -40,7 +40,11 @@ class SettingsFrame(Frame):
             "max_thread_number": "扫描时允许的最大线程数",
             "MOTD_use_unicode_font": "MOTD全部使用Unifont字体显示",
             "players_all": "服务器玩家累积并去重",
-            "allow_hor_resize": "允许水平调整窗口 ( 很卡 )"
+            "allow_hor_resize": "允许水平调整窗口 ( 很卡 )",
+            "use_proxy": "使用代理",
+            "proxy_kind": "代理类型 (sock5, sock4)",
+            "proxy_host": "代理服务器的地址",
+            "proxy_port": "代理服务器的端口"
         }
 
         self.config_frame = ScrolledFrame(self)
