@@ -134,6 +134,7 @@ class ScanBar(LabelFrame):
 
     def start_scan(self):  # 20500 - 25000
         self.logger.log(INFO, "开始扫描")
+        self.close_save_config()
         if self.in_scan:
             return
 
