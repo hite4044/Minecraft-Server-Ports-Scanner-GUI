@@ -5,21 +5,26 @@ from Gui.Widgets import *
 
 
 class SettingFrame(Frame):
-    def __init__(self, master: Misc, text: str, name: str, value: Any):
-        super().__init__(master)
+    def __init__(self, master: Misc, text: str, name: str, value: Any, use_sizer: bool = True):
+        if use_sizer:
+            super().__init__(master)
+            parent = self
+        else:
+            parent = master
         self.name = name
-        self.label = Label(self, text=text)
+        self.label = Label(parent, text=text)
         if isinstance(value, bool):
-            self.variable = BooleanVar(self, value=value, name=name)
-            self.widget = Checkbutton(self, variable=self.variable, onvalue=True, offvalue=False)
+            self.variable = BooleanVar(parent, value=value, name=name)
+            self.widget = Checkbutton(parent, variable=self.variable, onvalue=True, offvalue=False)
         elif isinstance(value, str):
-            self.variable = StringVar(self, value=value, name=name)
-            self.widget = Entry(self, textvariable=self.variable)
+            self.variable = StringVar(parent, value=value, name=name)
+            self.widget = Entry(parent, textvariable=self.variable)
         elif isinstance(value, int):
-            self.variable = IntVar(self, value=value, name=name)
-            self.widget = Spinbox(self, textvariable=self.variable, to=sys.maxsize)
-        self.label.pack(side=LEFT)
-        self.widget.pack(side=LEFT, padx=5)
+            self.variable = IntVar(parent, value=value, name=name)
+            self.widget = Spinbox(parent, textvariable=self.variable, to=sys.maxsize)
+        if use_sizer:
+            self.label.pack(side=LEFT)
+            self.widget.pack(side=LEFT, padx=5)
 
     def get(self):
         return self.variable.get()
@@ -51,7 +56,7 @@ class SettingsFrame(Frame):
         self.configs = {}
         for name, value in user_settings_loader.configs.items():
             self.configs[name] = SettingFrame(self.config_frame, self.language_support.get(name, name + ' ( 不生效 ) '),
-                                              name, value)
+                                              name, value, use_sizer=False)
 
         self.confirm_button = Button(self, text="保存更改", command=self.confirm)
         self.update_button = Button(self, text="更新", command=self.update_settings)
@@ -62,7 +67,8 @@ class SettingsFrame(Frame):
         self.config_frame.pack(fill=BOTH, expand=True)
         row = 0
         for sitting_frame in self.configs.values():
-            sitting_frame.grid(row=row, column=0, sticky=W)
+            sitting_frame.label.grid(row=row, column=0, sticky=W)
+            sitting_frame.widget.grid(row=row, column=1, sticky=W, pady=2)
             row += 1
         self.confirm_button.pack(anchor=SE, side=RIGHT)
         self.update_button.pack(anchor=SE, side=RIGHT, padx=5)
