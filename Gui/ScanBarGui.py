@@ -46,7 +46,7 @@ class ScanBar(LabelFrame):
         self.host_input = TextCombobox(self.input_frame, "域名: ", server_addresses)
         self.timeout_input = EntryScaleFloatFrame(self.input_frame, 0.1, 3.0, 0.2, "超时时间: ")
         self.thread_num_input = EntryScaleIntFrame(self.input_frame, 1,
-                                                   Vars.user_settings_loader.configs["max_thread_number"],
+                                                   Vars.config.max_thread_number,
                                                    1,
                                                    "线程数: ")
         self.range_input = RangeSelector(self.input_frame, "端口选择: ", 1024, 65535)
@@ -145,7 +145,7 @@ class ScanBar(LabelFrame):
 
         self.gui.servers.empty_tip.configure(text="检验连通性...")
         self.gui.update()
-        if user_settings_loader.configs['ping_before_scan'] and not self.check_host(host):
+        if config.ping_before_scan and not self.check_host(host):
             self.gui.servers.empty_tip.configure(text="没有服务器")
             return
         self.gui.servers.empty_tip.configure(text="没有服务器")

@@ -204,32 +204,46 @@ class ScaleRater:
 
 
 class UserSettingsLoader:
+    version_name_label_show: bool = False
+    theme_name: str = "darkly"
+    ping_before_scan: bool = True
+    global_font: str = "微软雅黑"
+    max_thread_number: int = 256
+    MOTD_use_unifont: bool = True
+    accumulation_player: bool = True
+    allow_hor_resize: bool = True
+    use_proxy: bool = False
+    proxy_kind: str = "sock5"
+    proxy_host: str = "127.0.0.1"
+    proxy_port: int = 1080
+
     def __init__(self):
         self.config_path = path_join(config_dir, "user_configs.json")
-        self.configs: Dict = self.defaults()
+        self.configs: dict[str, Any] = self.find_default_config()
         if not exists(self.config_path):
             return
         with open(self.config_path, "r", encoding="utf-8") as f:
-            json_configs: Dict = json.load(f)
+            json_configs: dict[str, Any] = json.load(f)
             if self.configs.keys() != json_configs.keys():
                 warnings.warn(f"可能存在潜在的设置信息不兼容问题. 以下是 user_configs.json 中的内容: {json_configs}")
             self.configs = {**self.configs, **json_configs}  # 酷炫就完事了 实际含义是拼接两个字典 并且有重复时遵从后者
+            for name, value in json_configs.items():
+                if name not in self.configs:
+                    print(f"未知的设置项: {name} -> {value}")
+                    continue
+                setattr(self, name, value)
 
-    @staticmethod
-    def defaults() -> Dict:
-        return {'if_version_name_shown_as_label': False,
-                'theme_name': "darkly",
-                'ping_before_scan': True,
-                "global_font": "微软雅黑",
-                "max_thread_number": 256,
-                "MOTD_use_unicode_font": True,
-                "players_all": False,
-                "allow_hor_resize": False,
-                "use_proxy": False,
-                "proxy_kind": "sock5",
-                "proxy_host": "127.0.0.1",
-                "proxy_port": 11451
-                }
+    def set_value(self, key: str, value: Any):
+        setattr(self, key, value)
+        self.configs[key] = value
+
+    def find_default_config(self):
+        config_dict: dict[str, Any] = {}
+        for name in self.__annotations__.keys():
+            value = getattr(self, name)
+            config_dict[name] = value
+        return config_dict
+
 
 
 class UserSettingsSaver:
@@ -243,6 +257,6 @@ class UserSettingsSaver:
 UserAddressOperator.read_config_file_list()
 
 scale_rater = ScaleRater()
-user_settings_loader = UserSettingsLoader()
+config: UserSettingsLoader = UserSettingsLoader()
 
 Sty = StyOP(None)

@@ -15,14 +15,14 @@ print(f"库加载时间: {perf_counter() - load_timer:.3f}秒")
 
 
 def set_default_font():
-    font.nametofont("TkDefaultFont").config(family=Vars.user_settings_loader.configs['global_font'], size=10)
+    font.nametofont("TkDefaultFont").config(family=Vars.config.global_font, size=10)
 
 
 class Title(Label):
     def __init__(self, master: Misc):
         super(Title, self).__init__(master,
                                     text="Minecraft服务器扫描器",
-                                    font=(Vars.user_settings_loader.configs['global_font'], 24))
+                                    font=(Vars.config.global_font, 24))
 
 
 class TitleBar(Frame):
@@ -36,7 +36,7 @@ class TitleBar(Frame):
 
 class GUI(Window):
     def __init__(self):
-        super(GUI, self).__init__(themename=user_settings_loader.configs['theme_name'])
+        super(GUI, self).__init__(themename=config.theme_name)
 
         set_default_font()
         self.config_root_window()
@@ -56,7 +56,7 @@ class GUI(Window):
     def config_root_window(self):  # 设置窗体
         self.wm_title("MC服务器扫描器")  # 设置标题
         self.protocol("WM_DELETE_WINDOW", self.on_delete_window)
-        self.wm_resizable(user_settings_loader.configs["allow_hor_resize"], True)
+        self.wm_resizable(config.configs["allow_hor_resize"], True)
         Sty.set_obj(self._style)
         Thread(target=self.set_icon).start()
         #Thread(target=self.place_window_center).start()
@@ -72,7 +72,7 @@ class GUI(Window):
 
     def on_delete_window(self):
         self.scan_bar.close_save_config()
-        UserSettingsSaver.save_user_configs(user_settings_loader)
+        UserSettingsSaver.save_user_configs(config)
         self.destroy()
 
     def pack_widgets(self):

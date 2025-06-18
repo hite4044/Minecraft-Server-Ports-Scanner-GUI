@@ -111,7 +111,7 @@ class PlayersInfo(Frame, Infer):
         self.data = data
 
         self.text.configure(text=f"人数：{data.player_online}/{data.player_max}")
-        if not user_settings_loader.configs["players_all"]:
+        if not config.accumulation_player:
             self.players.clear()
         for player in data.players:
             if player["name"] not in self.players:
@@ -209,7 +209,7 @@ class VersionInfo(Frame, Infer):
 
         super(VersionInfo, self).__init__(master)
         self.data = None
-        self.if_version_name_shown_as_label: bool = user_settings_loader.configs['if_version_name_shown_as_label']
+        self.version_name_label_show: bool = config.version_name_label_show
 
         self.version_name_frame = Frame(self)
         self.version_name_label = Label(self.version_name_frame, anchor=CENTER)
@@ -235,7 +235,7 @@ class VersionInfo(Frame, Infer):
     def pack_widgets(self):
         self.version_name_frame.pack()
         self.version_name_label.pack(side=LEFT)
-        if not self.if_version_name_shown_as_label:
+        if not self.version_name_label_show:
             self.version_name_text.configure(height=1, width=20)
             self.version_name_text.pack(side=LEFT)
         self.minecraft_version.pack()
@@ -251,7 +251,7 @@ class VersionInfo(Frame, Infer):
         else:
             description_json = [{"text": data.version_name}]
         self.version_name_label.configure(text="版本名：")
-        if self.if_version_name_shown_as_label:
+        if self.version_name_label_show:
             self.version_name_label.configure(text=f"版本名：{data.version_name}")
         self.version_name_text.load_motd(description_json)
         self.minecraft_version.configure(text=f"正式版本名：{data.protocol_name}")

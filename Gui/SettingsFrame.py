@@ -38,13 +38,13 @@ class SettingsFrame(Frame):
         super().__init__(master)
 
         self.language_support = {
-            "if_version_name_shown_as_label": "将 VersionName 显示为纯文本格式",
+            "version_name_label_show": "将 VersionName 显示为纯文本格式",
             "theme_name": "主题 ( 不建议在此处修改 )",
             "ping_before_scan": "扫描之前先检测连通性",
             "global_font": "字体",
             "max_thread_number": "扫描时允许的最大线程数",
-            "MOTD_use_unicode_font": "MOTD全部使用Unifont字体显示",
-            "players_all": "服务器玩家累积并去重",
+            "MOTD_use_unifont": "MOTD全部使用Unifont字体显示",
+            "accumulation_player": "服务器玩家累积并去重",
             "allow_hor_resize": "允许水平调整窗口 ( 很卡 )",
             "use_proxy": "使用代理",
             "proxy_kind": "代理类型 (sock5, sock4)",
@@ -54,7 +54,7 @@ class SettingsFrame(Frame):
 
         self.config_frame = ScrolledFrame(self)
         self.configs = {}
-        for name, value in user_settings_loader.configs.items():
+        for name, value in config.configs.items():
             self.configs[name] = SettingFrame(self.config_frame, self.language_support.get(name, name + ' ( 不生效 ) '),
                                               name, value, use_sizer=False)
 
@@ -75,8 +75,8 @@ class SettingsFrame(Frame):
 
     def confirm(self):
         for name, widget in self.configs.items():
-            user_settings_loader.configs[name] = widget.get()
+            config.configs[name] = widget.get()
 
     def update_settings(self):
         for name, widget in self.configs.items():
-            widget.set(user_settings_loader.configs[name])
+            widget.set(config.configs[name])

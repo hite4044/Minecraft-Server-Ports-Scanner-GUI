@@ -104,7 +104,7 @@ class MOTD(Text, Infer):
         Notes:
             有概率会引发 RuntimeError, 原因未知
         """
-        if Vars.user_settings_loader.configs['MOTD_use_unicode_font']:
+        if Vars.config.MOTD_use_unifont:
             if "UnifontExMono" not in font.families():
                 custom_font = font.Font(font="assets/UnifontExMono.ttf", family="UnifontExMono")
             else:
@@ -553,7 +553,7 @@ class ThemesSelector(Frame):
 
     def on_theme_selected(self, _):
         self.style.theme_use(self.theme_selector.get())
-        Vars.user_settings_loader.configs['theme_name'] = self.theme_selector.get()
+        Vars.config.set_value("theme_name", self.theme_selector.get())
 
 
 class RangeSelector(Frame):

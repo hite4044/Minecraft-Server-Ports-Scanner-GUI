@@ -14,7 +14,7 @@ from PIL import Image, ImageTk
 from Libs import Vars
 import socks
 
-from Libs.Vars import user_settings_loader
+from Libs.Vars import config
 
 ServerPinger: Any = None
 Address: Any = None
@@ -49,6 +49,16 @@ class ServerScanner:
         self.worker_count: int = 0  # 线程数
         self.working_worker: int = 0  # 工作中的线程数
         self.thread_num_lock = Lock()
+        self.set_proxy()
+
+    @staticmethod
+    def set_proxy():
+        if config.use_proxy:
+            kind_map = {"sock5": socks.SOCKS5,
+                        "sock4": socks.SOCKS4}
+            socks.set_default_proxy(kind_map[config.proxy_kind], config.proxy_host, config.proxy_port)
+            from mcstatus.protocol import connection
+            connection.socket.socket = socks.socksocket
 
     def config(self, timeout: float = 0.7, thread_num: int = 256, callback: object = lambda x: None):
         self.thread_num = thread_num
@@ -61,6 +71,8 @@ class ServerScanner:
                 self.work_queue.get(block=False)
             except Empty:
                 break
+
+        self.set_proxy()
         self.in_scan = True
         self.add_task(host, port_range)
 
@@ -168,17 +180,6 @@ class Port:
         self.port = port
         self.protocol = protocol_version
         self.timeout = timeout
-        self.set_proxy()
-
-    @staticmethod
-    def set_proxy():
-        if user_settings_loader.configs["use_proxy"]:
-            kind_map = {"sock5": socks.SOCKS5,
-                        "sock4": socks.SOCKS4}
-            socks.set_default_proxy(kind_map[user_settings_loader.configs["proxy_kind"]],
-            user_settings_loader.configs["proxy_host"], user_settings_loader.configs["proxy_port"])
-            from mcstatus.protocol import connection
-            connection.socket.socket = socks.socksocket
 
     def get_server_info(self) -> dict:
         """
