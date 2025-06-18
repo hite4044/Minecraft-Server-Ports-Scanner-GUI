@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+import socket
 from base64 import b64decode
 from copy import deepcopy
 from io import BytesIO
@@ -6,9 +7,14 @@ from queue import Queue, Empty
 from threading import Thread, Lock
 from time import sleep
 from typing import List, Any, Dict, Union
+
+import ping3
 from PIL import Image, ImageTk
 
 from Libs import Vars
+import socks
+
+from Libs.Vars import user_settings_loader
 
 ServerPinger: Any = None
 Address: Any = None
@@ -162,6 +168,17 @@ class Port:
         self.port = port
         self.protocol = protocol_version
         self.timeout = timeout
+        self.set_proxy()
+
+    @staticmethod
+    def set_proxy():
+        if user_settings_loader.configs["use_proxy"]:
+            kind_map = {"sock5": socks.SOCKS5,
+                        "sock4": socks.SOCKS4}
+            socks.set_default_proxy(kind_map[user_settings_loader.configs["proxy_kind"]],
+            user_settings_loader.configs["proxy_host"], user_settings_loader.configs["proxy_port"])
+            from mcstatus.protocol import connection
+            connection.socket.socket = socks.socksocket
 
     def get_server_info(self) -> dict:
         """
