@@ -228,7 +228,7 @@ class UserSettingsLoader:
                 "use_proxy": False,
                 "proxy_kind": "sock5",
                 "proxy_host": "127.0.0.1",
-                "proxy_port": "11451"
+                "proxy_port": 11451
                 }
 
 
